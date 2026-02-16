@@ -1,0 +1,29 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+        group: DEFAULT_GROUP
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/mooncell?useSSL=false&serverTimezone=UTC&characterEncoding=utf-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/001_init_gateway.sql
+      encoding: UTF-8
+
+logging:
+  level:
+    com.mooncell.gateway.core.dao: DEBUG

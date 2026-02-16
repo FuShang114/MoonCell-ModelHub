@@ -1,0 +1,25 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${MOONCELL_NACOS_ADDR:mooncell-nacos:8848}
+        namespace: ${MOONCELL_NACOS_NAMESPACE:public}
+        group: ${MOONCELL_NACOS_GROUP:DEFAULT_GROUP}
+
+  datasource:
+    url: jdbc:mysql://${MOONCELL_DB_HOST:mooncell-mysql}:${MOONCELL_DB_PORT:3306}/${MOONCELL_DB_NAME:mooncell}?useSSL=false&serverTimezone=UTC&characterEncoding=utf-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${MOONCELL_DB_USER:root}
+    password: ${MOONCELL_DB_PASSWORD:root}
+
+  data:
+    redis:
+      host: ${MOONCELL_REDIS_HOST:mooncell-redis}
+      port: ${MOONCELL_REDIS_PORT:6379}
+      database: ${MOONCELL_REDIS_DB:0}
+
+  sql:
+    init:
+      mode: ${MOONCELL_SQL_INIT_MODE:never}
+      schema-locations: classpath:sql/001_init_gateway.sql
+      encoding: UTF-8
