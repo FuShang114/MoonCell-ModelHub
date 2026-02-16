@@ -11,7 +11,6 @@ import com.mooncell.gateway.core.model.ModelInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.http.HttpStatus;
@@ -54,7 +53,6 @@ public class GatewayService {
     private final WebClient.Builder webClientBuilder;
     private final ObjectMapper objectMapper;
     private final StringRedisTemplate stringRedisTemplate;
-    private final RedisTemplate redisTemplate;
 
     public Flux<String> chat(OpenAiRequest request) {
         String rawMessage = request.getMessage();
@@ -71,9 +69,6 @@ public class GatewayService {
 
         final String finalIdempotencyKey = idempotencyKey;
         log.info("Received request, idempotencyKey={}", finalIdempotencyKey);
-
-        // 1. 幂等检查（同步执行 Lua 脚本）
-        //应该用setnx
 
         Long ok;
         try {
@@ -92,8 +87,9 @@ public class GatewayService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Duplicate request");
         }
 
-        // 2. 从负载均衡获取一个可用实例（整合QPS限流）
-        ModelInstance instance = loadBalancer.getNextAvailableInstance();
+        // 2. 从负载均衡获取一个可用实例（整合RPM/TPM限流）
+        int estimatedTokens = estimateTotalTokens(rawMessage);
+        ModelInstance instance = loadBalancer.getNextAvailableInstance(estimatedTokens);
 
         if (instance == null) {
             stringRedisTemplate.delete(redisKey);
@@ -135,12 +131,23 @@ public class GatewayService {
                 })
                 .doOnComplete(() -> finalInstance.recordSuccess(0))
                 .doFinally(signalType -> {
-                    // 异常安全的QPS释放
+                    // 异常安全的资源释放
                     loadBalancer.releaseInstance(finalInstance);
                     stringRedisTemplate.delete(redisKey);
                 });
     }
-    //待优化代码块--重复工作导致大量临时对象
+    
+    private int estimateTotalTokens(String message) {
+        if (message == null || message.isBlank()) {
+            return 1;
+        }
+        // 粗略估算：中文按 1.6 字/Token，英文按 4 字符/Token，取偏保守值。
+        int chars = message.length();
+        int estimatedInput = Math.max(1, chars / 3);
+        int estimatedOutput = Math.max(64, estimatedInput * 2);
+        return estimatedInput + estimatedOutput;
+    }
+
     public ObjectNode buildPayload(ModelInstance instance, String userMessage) {
         ArrayNode messages = buildDefaultMessages(userMessage);
         String template = instance.getPostModel();

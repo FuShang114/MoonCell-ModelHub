@@ -4,6 +4,7 @@ import com.mooncell.gateway.dto.HealthyInstanceDto;
 import com.mooncell.gateway.dto.InstanceConfigDto;
 import com.mooncell.gateway.dto.InstanceStatsDto;
 import com.mooncell.gateway.dto.AddInstanceRequest;
+import com.mooncell.gateway.dto.LoadBalancingSettingsDto;
 import com.mooncell.gateway.dto.ProviderDto;
 import com.mooncell.gateway.dto.ProviderRequest;
 import com.mooncell.gateway.dto.UpdatePostModelRequest;
@@ -45,7 +46,7 @@ public class AdminController {
      */
     @Operation(
         summary = "获取实例统计信息",
-        description = "获取LoadBalancer的实例统计信息，包括总实例数、健康实例数和可用QPS"
+        description = "获取LoadBalancer的实例统计信息，包括总实例数、健康实例数和可用RPM/TPM"
     )
     @GetMapping("/instance-stats")
     public InstanceStatsDto getInstanceStats() {
@@ -140,5 +141,17 @@ public class AdminController {
     @PutMapping("/providers/{id}")
     public String updateProvider(@PathVariable("id") Long id, @RequestBody ProviderRequest request) {
         return adminService.updateProvider(id, request);
+    }
+
+    @Operation(summary = "获取负载均衡算法配置", description = "获取当前算法及相关参数")
+    @GetMapping("/load-balancing/settings")
+    public LoadBalancingSettingsDto getLoadBalancingSettings() {
+        return adminService.getLoadBalancingSettings();
+    }
+
+    @Operation(summary = "更新负载均衡算法配置", description = "支持热切换传统算法和对象池算法")
+    @PutMapping("/load-balancing/settings")
+    public LoadBalancingSettingsDto updateLoadBalancingSettings(@RequestBody LoadBalancingSettingsDto request) {
+        return adminService.updateLoadBalancingSettings(request);
     }
 }

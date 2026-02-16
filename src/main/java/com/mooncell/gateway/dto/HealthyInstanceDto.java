@@ -10,7 +10,8 @@ public class HealthyInstanceDto {
     private String providerName;
     private String url;
     private String modelName;
-    private Integer maxQps;
+    private Integer rpmLimit;
+    private Integer tpmLimit;
     private Integer requestCount;
     private Boolean healthy;
     private String lastHeartbeat;
@@ -18,15 +19,16 @@ public class HealthyInstanceDto {
 
     public HealthyInstanceDto() {}
 
-    public HealthyInstanceDto(Long id, String name, String providerName, String url, 
-                           String modelName, Integer maxQps, Integer requestCount, 
+    public HealthyInstanceDto(Long id, String name, String providerName, String url,
+                           String modelName, Integer rpmLimit, Integer tpmLimit, Integer requestCount,
                            Boolean healthy, String lastHeartbeat, Integer failureCount) {
         this.id = id;
         this.name = name;
         this.providerName = providerName;
         this.url = url;
         this.modelName = modelName;
-        this.maxQps = maxQps;
+        this.rpmLimit = rpmLimit;
+        this.tpmLimit = tpmLimit;
         this.requestCount = requestCount;
         this.healthy = healthy;
         this.lastHeartbeat = lastHeartbeat;
@@ -49,9 +51,12 @@ public class HealthyInstanceDto {
     public String getModelName() { return modelName; }
     public void setModelName(String modelName) { this.modelName = modelName; }
     
-    public Integer getMaxQps() { return maxQps; }
-    public void setMaxQps(Integer maxQps) { this.maxQps = maxQps; }
-    
+    public Integer getRpmLimit() { return rpmLimit; }
+    public void setRpmLimit(Integer rpmLimit) { this.rpmLimit = rpmLimit; }
+
+    public Integer getTpmLimit() { return tpmLimit; }
+    public void setTpmLimit(Integer tpmLimit) { this.tpmLimit = tpmLimit; }
+
     public Integer getRequestCount() { return requestCount; }
     public void setRequestCount(Integer requestCount) { this.requestCount = requestCount; }
     

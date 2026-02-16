@@ -16,8 +16,9 @@
             background-color: #f5f7fb;
             color: #1f2937;
             line-height: 1.5;
-            overflow: hidden;
+            overflow-x: hidden;
         }
+
 
         .app {
             display: flex;
@@ -75,8 +76,7 @@
         .content {
             flex: 1;
             padding: 24px 28px 36px;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
         }
 
         .topbar {
@@ -349,6 +349,7 @@
             margin-right: 0.5rem;
         }
 
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -376,6 +377,7 @@
             .grid-2 {
                 grid-template-columns: 1fr;
             }
+
         }
     </style>
 </head>
@@ -389,6 +391,7 @@
             <nav class="nav">
                 <a href="/config">监控大盘</a>
                 <a class="active" href="/admin/debug">调试台</a>
+                <a href="/settings">策略设置</a>
             </nav>
         </aside>
 
@@ -399,6 +402,7 @@
                     <p>统一聊天接口调试与响应流观测</p>
                 </div>
                 <div class="controls">
+                    <a href="/settings" class="btn btn-ghost">策略设置</a>
                     <a href="/config" class="btn btn-ghost">返回监控</a>
                 </div>
             </div>

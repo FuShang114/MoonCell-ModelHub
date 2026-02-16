@@ -1,0 +1,7 @@
+scenario,token_profile,node_profile,tag,score,fixed_rpm,aimd_rpm,fixed_composite_util,aimd_composite_util,fixed_p95_ttft_ms,aimd_p95_ttft_ms,fixed_p95_e2e_ms,aimd_p95_e2e_ms,fixed_reject_rate,aimd_reject_rate,fixed_gc_avg,aimd_gc_avg,fixed_tokens_per_sec,aimd_tokens_per_sec
+steady_balanced,mixed,balanced_high,AIMD中性/需进一步调优,0.9531,4019.49,4019.49,0.4511,0.4511,212.66,221.18,900.55,906.16,0.0,0.0,0.8894,0.8894,54896.59,54896.59
+steady_high_pressure,mixed,balanced,AIMD不适合当前场景,0.8183,5858.38,4397.91,0.5859,0.3838,1340.89,1377.17,1987.59,2053.56,0.1802,0.3846,1.2362,0.9598,76189.19,59106.88
+bursty_traffic,mixed,balanced,AIMD不适合当前场景,0.9354,5230.26,4731.6,0.6457,0.5657,1338.01,1342.25,1839.9,1861.36,0.3632,0.4239,1.1709,1.0653,72127.34,65412.59
+long_context_heavy,long,tpm_tight,AIMD不适合当前场景,0.6602,1116.03,439.81,0.1378,0.0543,1413.26,1498.46,2183.67,2816.62,0.7706,0.9096,0.7789,0.4271,45700.2,25276.98
+short_chat_realtime,short,rpm_tight,AIMD不适合当前场景,0.8769,3734.29,3271.97,0.2706,0.1818,1270.01,1272.54,1439.89,1447.66,0.5166,0.5764,0.2814,0.2462,17113.08,15031.45
+token_quota_tight,token_heavy,tpm_tight,AIMD不适合当前场景,0.6948,1456.6,585.64,0.1798,0.0723,1389.27,1443.38,2056.13,2320.29,0.7787,0.911,0.809,0.407,45727.19,22243.11

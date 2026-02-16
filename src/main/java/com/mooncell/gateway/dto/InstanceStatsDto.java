@@ -7,17 +7,19 @@ package com.mooncell.gateway.dto;
 public class InstanceStatsDto {
     private Integer totalInstances;
     private Integer healthyInstances;
-    // 语义为可用负载（并发任务数）
-    private Integer availableQps;
+    private Integer availableRpm;
+    private Integer availableTpm;
     private Long lastWindowReset;
+    private String algorithm;
 
     public InstanceStatsDto() {}
 
-    public InstanceStatsDto(Integer totalInstances, Integer healthyInstances, 
-                         Integer availableQps, Long lastWindowReset) {
+    public InstanceStatsDto(Integer totalInstances, Integer healthyInstances,
+                         Integer availableRpm, Integer availableTpm, Long lastWindowReset) {
         this.totalInstances = totalInstances;
         this.healthyInstances = healthyInstances;
-        this.availableQps = availableQps;
+        this.availableRpm = availableRpm;
+        this.availableTpm = availableTpm;
         this.lastWindowReset = lastWindowReset;
     }
 
@@ -28,9 +30,15 @@ public class InstanceStatsDto {
     public Integer getHealthyInstances() { return healthyInstances; }
     public void setHealthyInstances(Integer healthyInstances) { this.healthyInstances = healthyInstances; }
     
-    public Integer getAvailableQps() { return availableQps; }
-    public void setAvailableQps(Integer availableQps) { this.availableQps = availableQps; }
-    
+    public Integer getAvailableRpm() { return availableRpm; }
+    public void setAvailableRpm(Integer availableRpm) { this.availableRpm = availableRpm; }
+
+    public Integer getAvailableTpm() { return availableTpm; }
+    public void setAvailableTpm(Integer availableTpm) { this.availableTpm = availableTpm; }
+
     public Long getLastWindowReset() { return lastWindowReset; }
     public void setLastWindowReset(Long lastWindowReset) { this.lastWindowReset = lastWindowReset; }
+
+    public String getAlgorithm() { return algorithm; }
+    public void setAlgorithm(String algorithm) { this.algorithm = algorithm; }
 }

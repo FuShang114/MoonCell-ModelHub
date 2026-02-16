@@ -2,222 +2,432 @@ package com.mooncell.gateway.core.balancer;
 
 import com.mooncell.gateway.core.dao.ModelInstanceMapper;
 import com.mooncell.gateway.core.model.ModelInstance;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-/**
- * 负载均衡器整合版
- * 维护并发安全的实例集合，整合负载均衡和并发控制功能
- * 调度策略：随机采样 + 最少占用
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class LoadBalancer {
-    
     private final ModelInstanceMapper modelMapper;
-    
-    private static final int SAMPLE_COUNT = 2;
-    private final CopyOnWriteArrayList<InstanceWrapper> instanceList = new CopyOnWriteArrayList<>();
-    private final Map<String, InstanceWrapper> instanceMap = new ConcurrentHashMap<>();
-    
-    /**
-     * 初始化或刷新实例队列
-     */
-    public synchronized void refreshInstances() {
-        try {
-            log.info("Refreshing instance queue...");
-            instanceList.clear();
-            instanceMap.clear();
-            
-            // 重新加载所有实例
-            List<ModelInstance> allInstances = modelMapper.findAll();
-            if (allInstances != null && !allInstances.isEmpty()) {
-                for (ModelInstance instance : allInstances) {
-                    InstanceWrapper wrapper = new InstanceWrapper(instance);
-                    instanceList.add(wrapper);
-                    instanceMap.put(instance.getUrl(), wrapper);
-                }
-                log.info("Loaded {} instances into queue", allInstances.size());
-            }
-        } catch (Exception e) {
-            log.error("Failed to refresh instances", e);
+    private final Map<LoadBalancingAlgorithm, LoadBalancingStrategy> strategyCache = new ConcurrentHashMap<>();
+    private volatile LoadBalancingSettings settings = LoadBalancingSettings.defaultSettings();
+    private volatile LoadBalancingAlgorithm currentAlgorithm = LoadBalancingAlgorithm.TRADITIONAL;
+    private volatile LoadBalancingStrategy activeStrategy;
+
+    @PostConstruct
+    public void init() {
+        activeStrategy = createStrategy(settings.getAlgorithm());
+        strategyCache.put(settings.getAlgorithm(), activeStrategy);
+        activeStrategy.onActivate(settings.copy());
+        refreshInstances();
+    }
+
+    public synchronized void updateSettings(LoadBalancingSettings newSettings) {
+        if (newSettings == null) {
+            return;
+        }
+        int normalizedCore = Math.max(1, newSettings.getObjectPoolCoreSize());
+        int normalizedMax = Math.max(normalizedCore, newSettings.getObjectPoolMaxSize());
+        newSettings.setObjectPoolCoreSize(normalizedCore);
+        newSettings.setObjectPoolMaxSize(normalizedMax);
+        LoadBalancingAlgorithm newAlgorithm = newSettings.getAlgorithm() == null
+                ? LoadBalancingAlgorithm.TRADITIONAL : newSettings.getAlgorithm();
+        settings = newSettings.copy();
+        if (newAlgorithm != currentAlgorithm) {
+            log.info("Switch load balancing algorithm: {} -> {}", currentAlgorithm, newAlgorithm);
+            activeStrategy.onDeactivate();
+            activeStrategy = strategyCache.computeIfAbsent(newAlgorithm, this::createStrategy);
+            currentAlgorithm = newAlgorithm;
+            activeStrategy.onActivate(settings.copy());
+            refreshInstances();
+        } else {
+            activeStrategy.onSettingsChanged(settings.copy());
         }
     }
 
-    /**
-     * 获取下一个可用实例（整合负载均衡和并发控制 + 负载令牌桶）
-     * 随机采样 + 最少占用
-     * @return 可用实例，如果无可用实例返回null
-     */
+    public LoadBalancingSettings getSettings() {
+        LoadBalancingSettings copy = settings.copy();
+        copy.setAlgorithm(currentAlgorithm);
+        return copy;
+    }
+
+    public synchronized void refreshInstances() {
+        List<ModelInstance> instances = modelMapper.findAll();
+        if (instances == null) {
+            instances = List.of();
+        }
+        activeStrategy.refreshInstances(instances, settings.copy());
+    }
+
+    public ModelInstance getNextAvailableInstance(int estimatedTokens) {
+        return activeStrategy.acquire(Math.max(1, estimatedTokens));
+    }
+
     public ModelInstance getNextAvailableInstance() {
-        if (instanceList.isEmpty()) {
-            refreshInstances();
+        return getNextAvailableInstance(256);
+    }
+
+    public void releaseInstance(ModelInstance instance) {
+        activeStrategy.release(instance);
+    }
+
+    public List<ModelInstance> getInstanceList() {
+        return activeStrategy.getInstances();
+    }
+
+    public QueueStats getStats() {
+        QueueStats stats = activeStrategy.getStats();
+        stats.setAlgorithm(currentAlgorithm.name());
+        return stats;
+    }
+
+    private LoadBalancingStrategy createStrategy(LoadBalancingAlgorithm algorithm) {
+        return switch (algorithm) {
+            case OBJECT_POOL -> new ObjectPoolStrategy();
+            case TRADITIONAL -> new TraditionalStrategy();
+        };
+    }
+
+    private interface LoadBalancingStrategy {
+        void onActivate(LoadBalancingSettings settings);
+        void onDeactivate();
+        void onSettingsChanged(LoadBalancingSettings settings);
+        void refreshInstances(List<ModelInstance> instances, LoadBalancingSettings settings);
+        ModelInstance acquire(int estimatedTokens);
+        void release(ModelInstance instance);
+        List<ModelInstance> getInstances();
+        QueueStats getStats();
+    }
+
+    private abstract static class BaseTokenStrategy implements LoadBalancingStrategy {
+        protected final CopyOnWriteArrayList<InstanceWrapper> wrappers = new CopyOnWriteArrayList<>();
+        protected final Map<String, InstanceWrapper> wrapperMap = new ConcurrentHashMap<>();
+        protected volatile LoadBalancingSettings settings = LoadBalancingSettings.defaultSettings();
+
+        @Override
+        public void onActivate(LoadBalancingSettings settings) {
+            this.settings = settings.copy();
         }
 
-        int size = instanceList.size();
-        if (size == 0) {
+        @Override
+        public void onDeactivate() {
+            wrappers.clear();
+            wrapperMap.clear();
+        }
+
+        @Override
+        public void onSettingsChanged(LoadBalancingSettings settings) {
+            this.settings = settings.copy();
+        }
+
+        @Override
+        public void refreshInstances(List<ModelInstance> instances, LoadBalancingSettings settings) {
+            this.settings = settings.copy();
+            wrappers.clear();
+            wrapperMap.clear();
+            for (ModelInstance instance : instances) {
+                InstanceWrapper wrapper = createWrapper(instance, this.settings);
+                wrappers.add(wrapper);
+                wrapperMap.put(instance.getUrl(), wrapper);
+            }
+        }
+
+        protected InstanceWrapper createWrapper(ModelInstance instance, LoadBalancingSettings settings) {
+            return new InstanceWrapper(instance);
+        }
+
+        protected int sampleCount() {
+            return Math.max(1, settings.getSampleCount());
+        }
+
+        protected List<InstanceWrapper> sampleWrappers() {
+            if (wrappers.isEmpty()) {
+                return List.of();
+            }
+            int size = wrappers.size();
+            int count = Math.min(sampleCount(), size);
+            Set<Integer> seen = new HashSet<>();
+            List<InstanceWrapper> samples = new ArrayList<>(count);
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+            while (samples.size() < count && seen.size() < size) {
+                int idx = random.nextInt(size);
+                if (seen.add(idx)) {
+                    samples.add(wrappers.get(idx));
+                }
+            }
+            return samples;
+        }
+
+        @Override
+        public List<ModelInstance> getInstances() {
+            return wrappers.stream().map(InstanceWrapper::instance).collect(Collectors.toList());
+        }
+
+        @Override
+        public QueueStats getStats() {
+            int total = wrappers.size();
+            int healthy = (int) wrappers.stream().filter(InstanceWrapper::isHealthy).count();
+            int availableRpm = wrappers.stream().filter(InstanceWrapper::isHealthy).mapToInt(InstanceWrapper::availableRpm).sum();
+            int availableTpm = wrappers.stream().filter(InstanceWrapper::isHealthy).mapToInt(InstanceWrapper::availableTpm).sum();
+            return new QueueStats(total, healthy, availableRpm, availableTpm, System.currentTimeMillis());
+        }
+    }
+
+    private static class TraditionalStrategy extends BaseTokenStrategy {
+        @Override
+        public ModelInstance acquire(int estimatedTokens) {
+            List<InstanceWrapper> samples = sampleWrappers();
+            if (samples.isEmpty()) {
+                return null;
+            }
+            samples.sort(Comparator.comparingDouble(wrapper -> wrapper.traditionalScore(estimatedTokens)));
+            for (InstanceWrapper wrapper : samples) {
+                if (wrapper.tryAcquire(estimatedTokens)) {
+                    return wrapper.instance();
+                }
+            }
             return null;
         }
 
-        int sampleCount = Math.min(SAMPLE_COUNT, size);
-        List<InstanceWrapper> samples = new ArrayList<>(sampleCount);
-        Set<Integer> seen = new HashSet<>(sampleCount);
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-        while (samples.size() < sampleCount && seen.size() < size) {
-            int idx = random.nextInt(size);
-            if (seen.add(idx)) {
-                samples.add(instanceList.get(idx));
+        @Override
+        public void release(ModelInstance instance) {
+            if (instance == null) {
+                return;
             }
-        }
-
-        samples.sort(Comparator.comparingInt(InstanceWrapper::getCurrentConcurrency));
-        for (InstanceWrapper wrapper : samples) {
-            if (wrapper.tryAcquire()) {
-                log.debug("Acquired instance: {} (Concurrent: {}/{})",
-                        wrapper.getUrl(), wrapper.getCurrentConcurrency(), wrapper.getMaxConcurrency());
-                return wrapper.getInstance();
+            InstanceWrapper wrapper = wrapperMap.get(instance.getUrl());
+            if (wrapper != null) {
+                wrapper.release();
             }
-        }
-
-        log.debug("No available instances found");
-        return null;
-    }
-
-    /**
-     * 释放实例（并发计数减1）
-     * @param instance 要释放的实例
-     */
-    public void releaseInstance(ModelInstance instance) {
-        if (instance == null) {
-            return;
-        }
-
-        InstanceWrapper wrapper = instanceMap.get(instance.getUrl());
-        if (wrapper != null) {
-            wrapper.release();
-            log.debug("Released instance: {} (Concurrent: {}/{})", 
-                wrapper.getUrl(), wrapper.getCurrentConcurrency(), wrapper.getMaxConcurrency());
         }
     }
 
-    /**
-     * 实例包装器
-         * 封装实例状态、并发管理与负载令牌桶
-     */
+    private static class ObjectPoolStrategy extends BaseTokenStrategy {
+        @Override
+        protected InstanceWrapper createWrapper(ModelInstance instance, LoadBalancingSettings settings) {
+            return new InstanceWrapper(instance, settings.getObjectPoolCoreSize(), settings.getObjectPoolMaxSize());
+        }
+
+        @Override
+        public void onActivate(LoadBalancingSettings settings) {
+            super.onActivate(settings);
+            for (InstanceWrapper wrapper : wrappers) {
+                wrapper.reconfigurePool(settings.getObjectPoolCoreSize(), settings.getObjectPoolMaxSize());
+            }
+        }
+
+        @Override
+        public void onSettingsChanged(LoadBalancingSettings settings) {
+            super.onSettingsChanged(settings);
+            for (InstanceWrapper wrapper : wrappers) {
+                wrapper.reconfigurePool(settings.getObjectPoolCoreSize(), settings.getObjectPoolMaxSize());
+            }
+        }
+
+        @Override
+        public void onDeactivate() {
+            for (InstanceWrapper wrapper : wrappers) {
+                wrapper.destroyPool();
+            }
+            super.onDeactivate();
+        }
+
+        @Override
+        public ModelInstance acquire(int estimatedTokens) {
+            List<InstanceWrapper> samples = sampleWrappers();
+            if (samples.isEmpty()) {
+                return null;
+            }
+            samples.sort(Comparator.comparingDouble(wrapper -> wrapper.poolScore(estimatedTokens)));
+            for (InstanceWrapper wrapper : samples) {
+                if (wrapper.tryAcquireFromPool(estimatedTokens)) {
+                    return wrapper.instance();
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public void release(ModelInstance instance) {
+            if (instance == null) {
+                return;
+            }
+            InstanceWrapper wrapper = wrapperMap.get(instance.getUrl());
+            if (wrapper != null) {
+                wrapper.releaseToPool();
+            }
+        }
+    }
+
     private static class InstanceWrapper {
         private final ModelInstance instance;
-        private final AtomicInteger currentConcurrency;
+        private final AtomicInteger currentConcurrency = new AtomicInteger(0);
         private final Object tokenLock = new Object();
-        private int availableTokens;
-        private long lastRefillNanos;
-        
-        public InstanceWrapper(ModelInstance instance) {
+        private double rpmTokens;
+        private double tpmTokens;
+        private long lastRefillNanos = System.nanoTime();
+        private int poolCoreSize;
+        private int poolMaxSize;
+        private int poolAllocatedSize;
+        private int poolActiveSize;
+        private int poolIdleSize;
+
+        InstanceWrapper(ModelInstance instance) {
             this.instance = instance;
-            this.currentConcurrency = new AtomicInteger(0);
-            this.availableTokens = getMaxQps();
-            this.lastRefillNanos = System.nanoTime();
+            this.rpmTokens = instance.getEffectiveRpmLimit();
+            this.tpmTokens = instance.getEffectiveTpmLimit();
         }
-        
-        /**
-         * 原子性增加并发计数
-         */
-        public boolean tryAcquire() {
-            if (!isHealthy()) {
-                return false;
-            }
+
+        InstanceWrapper(ModelInstance instance, int core, int max) {
+            this(instance);
+            reconfigurePool(core, max);
+        }
+
+        void reconfigurePool(int core, int max) {
             synchronized (tokenLock) {
+                this.poolCoreSize = Math.max(1, core);
+                this.poolMaxSize = Math.max(this.poolCoreSize, max);
+                if (poolAllocatedSize < poolCoreSize) {
+                    poolAllocatedSize = poolCoreSize;
+                }
+                if (poolAllocatedSize > poolMaxSize) {
+                    poolAllocatedSize = Math.max(poolMaxSize, poolActiveSize);
+                }
+                poolIdleSize = Math.max(0, poolAllocatedSize - poolActiveSize);
+            }
+        }
+
+        void destroyPool() {
+            synchronized (tokenLock) {
+                poolAllocatedSize = 0;
+                poolActiveSize = 0;
+                poolIdleSize = 0;
+            }
+        }
+
+        boolean tryAcquire(int estimatedTokens) {
+            synchronized (tokenLock) {
+                if (!isHealthy()) {
+                    return false;
+                }
                 refillTokens();
-                if (availableTokens <= 0) {
+                if (rpmTokens < 1.0d || tpmTokens < estimatedTokens) {
                     return false;
                 }
-                int current = currentConcurrency.get();
-                if (current >= getMaxConcurrency()) {
-                    return false;
-                }
-                availableTokens--;
+                rpmTokens -= 1.0d;
+                tpmTokens -= estimatedTokens;
                 currentConcurrency.incrementAndGet();
                 return true;
             }
         }
 
-        
-        /**
-         * 释放实例（并发计数减1，但不能小于0）
-         */
-        public void release() {
+        boolean tryAcquireFromPool(int estimatedTokens) {
             synchronized (tokenLock) {
-                int current = currentConcurrency.get();
-                if (current > 0) {
+                if (!isHealthy()) {
+                    return false;
+                }
+                refillTokens();
+                if (rpmTokens < 1.0d || tpmTokens < estimatedTokens) {
+                    return false;
+                }
+                if (poolIdleSize > 0) {
+                    poolIdleSize--;
+                    poolActiveSize++;
+                } else if (poolAllocatedSize < poolMaxSize) {
+                    poolAllocatedSize++;
+                    poolActiveSize++;
+                } else {
+                    return false;
+                }
+                rpmTokens -= 1.0d;
+                tpmTokens -= estimatedTokens;
+                currentConcurrency.incrementAndGet();
+                return true;
+            }
+        }
+
+        void release() {
+            synchronized (tokenLock) {
+                if (currentConcurrency.get() > 0) {
                     currentConcurrency.decrementAndGet();
                 }
             }
         }
-        
-        /**
-         * 检查实例是否健康
-         */
-        public boolean isHealthy() {
-            return instance.isHealthy();
-        }
-        
-        /**
-         * 获取最大并发
-         */
-        public int getMaxConcurrency() {
-            return instance.getMaxQps() != null ? instance.getMaxQps() : 10;
-        }
 
-        public int getMaxQps() {
-            return instance.getMaxQps() != null ? instance.getMaxQps() : 10;
-        }
-        
-        /**
-         * 获取当前并发
-         */
-        public int getCurrentConcurrency() {
-            return currentConcurrency.get();
-        }
-        
-        /**
-         * 获取可用并发
-         */
-        public int getAvailableConcurrency() {
-            return Math.max(0, getMaxConcurrency() - currentConcurrency.get());
-        }
-
-        public int getAvailableTokens() {
+        void releaseToPool() {
             synchronized (tokenLock) {
-                refillTokens();
-                return availableTokens;
+                if (currentConcurrency.get() > 0) {
+                    currentConcurrency.decrementAndGet();
+                }
+                if (poolActiveSize > 0) {
+                    poolActiveSize--;
+                    poolIdleSize = Math.min(poolAllocatedSize, poolIdleSize + 1);
+                }
             }
         }
-        
-        /**
-         * 获取实例
-         */
-        public ModelInstance getInstance() {
-            return instance;
+
+        double traditionalScore(int estimatedTokens) {
+            synchronized (tokenLock) {
+                refillTokens();
+                if (!canAcquireWithBudgetAndConcurrency(estimatedTokens)) {
+                    return Double.MAX_VALUE;
+                }
+                double concurrencyPressure = normalizeInflightPressure();
+                double rpmPressure = 1.0d - tokenHeadroom(rpmTokens, instance.getEffectiveRpmLimit());
+                double tpmPressure = 1.0d - tokenHeadroom(tpmTokens, instance.getEffectiveTpmLimit());
+                return 0.60d * concurrencyPressure + 0.20d * rpmPressure + 0.20d * tpmPressure;
+            }
         }
-        
-        /**
-         * 获取URL
-         */
-        public String getUrl() {
-            return instance.getUrl();
+
+        double poolScore(int estimatedTokens) {
+            synchronized (tokenLock) {
+                refillTokens();
+                if (!canAcquireWithBudgetAndConcurrency(estimatedTokens)) {
+                    return Double.MAX_VALUE;
+                }
+                boolean poolCanGrow = poolIdleSize > 0 || poolAllocatedSize < poolMaxSize;
+                if (!poolCanGrow) {
+                    return Double.MAX_VALUE;
+                }
+                double poolPressure = poolAllocatedSize <= 0 ? 0.0d : (double) poolActiveSize / poolAllocatedSize;
+                double concurrencyPressure = normalizeInflightPressure();
+                double rpmPressure = 1.0d - tokenHeadroom(rpmTokens, instance.getEffectiveRpmLimit());
+                double tpmPressure = 1.0d - tokenHeadroom(tpmTokens, instance.getEffectiveTpmLimit());
+                return 0.45d * poolPressure + 0.35d * concurrencyPressure + 0.10d * rpmPressure + 0.10d * tpmPressure;
+            }
+        }
+
+        private boolean canAcquireWithBudgetAndConcurrency(int estimatedTokens) {
+            if (!isHealthy()) {
+                return false;
+            }
+            return rpmTokens >= 1.0d && tpmTokens >= estimatedTokens;
+        }
+
+        private double normalizeInflightPressure() {
+            int inflight = currentConcurrency.get();
+            return inflight <= 0 ? 0.0d : inflight / (inflight + 8.0d);
+        }
+
+        private double tokenHeadroom(double tokens, int limit) {
+            if (limit <= 0) {
+                return 0.0d;
+            }
+            return Math.min(1.0d, Math.max(0.0d, tokens / limit));
         }
 
         private void refillTokens() {
@@ -226,57 +436,62 @@ public class LoadBalancer {
             if (elapsed <= 0) {
                 return;
             }
-            int rate = getMaxQps();
-            long tokensToAdd = (elapsed * rate) / 1_000_000_000L;
-            if (tokensToAdd > 0) {
-                availableTokens = (int) Math.min(rate, availableTokens + tokensToAdd);
-                lastRefillNanos = now;
+            double sec = elapsed / 1_000_000_000.0d;
+            rpmTokens = Math.min(instance.getEffectiveRpmLimit(), rpmTokens + sec * (instance.getEffectiveRpmLimit() / 60.0d));
+            tpmTokens = Math.min(instance.getEffectiveTpmLimit(), tpmTokens + sec * (instance.getEffectiveTpmLimit() / 60.0d));
+            lastRefillNanos = now;
+        }
+
+        boolean isHealthy() {
+            return instance.isHealthy();
+        }
+
+        int currentConcurrency() {
+            return currentConcurrency.get();
+        }
+
+        int availableRpm() {
+            synchronized (tokenLock) {
+                refillTokens();
+                return (int) Math.floor(Math.max(0, rpmTokens));
             }
+        }
+
+        int availableTpm() {
+            synchronized (tokenLock) {
+                refillTokens();
+                return (int) Math.floor(Math.max(0, tpmTokens));
+            }
+        }
+
+        ModelInstance instance() {
+            return instance;
         }
     }
 
-    /**
-     * 获取所有实例列表
-     */
-    public List<ModelInstance> getInstanceList() {
-        return instanceList.stream()
-            .map(InstanceWrapper::getInstance)
-            .collect(Collectors.toList());
-    }
-
-    /**
-     * 获取队列统计信息
-     */
-    public QueueStats getStats() {
-        int totalInstances = instanceList.size();
-        int healthyInstances = (int) instanceList.stream().filter(InstanceWrapper::isHealthy).count();
-        int availableConcurrency = instanceList.stream()
-            .filter(InstanceWrapper::isHealthy)
-            .mapToInt(wrapper -> Math.min(wrapper.getAvailableConcurrency(), wrapper.getAvailableTokens()))
-            .sum();
-        
-        return new QueueStats(totalInstances, healthyInstances, availableConcurrency, System.currentTimeMillis());
-    }
-
-    /**
-     * 队列统计信息
-     */
     public static class QueueStats {
         private final int totalInstances;
         private final int healthyInstances;
-        private final int availableQps;
+        private final int availableRpm;
+        private final int availableTpm;
         private final long lastWindowReset;
-        
-        public QueueStats(int totalInstances, int healthyInstances, int availableQps, long lastWindowReset) {
+        private String algorithm;
+
+        public QueueStats(int totalInstances, int healthyInstances, int availableRpm,
+                          int availableTpm, long lastWindowReset) {
             this.totalInstances = totalInstances;
             this.healthyInstances = healthyInstances;
-            this.availableQps = availableQps;
+            this.availableRpm = availableRpm;
+            this.availableTpm = availableTpm;
             this.lastWindowReset = lastWindowReset;
         }
-        
+
         public int getTotalInstances() { return totalInstances; }
         public int getHealthyInstances() { return healthyInstances; }
-        public int getAvailableQps() { return availableQps; }
+        public int getAvailableRpm() { return availableRpm; }
+        public int getAvailableTpm() { return availableTpm; }
         public long getLastWindowReset() { return lastWindowReset; }
+        public String getAlgorithm() { return algorithm; }
+        public void setAlgorithm(String algorithm) { this.algorithm = algorithm; }
     }
 }

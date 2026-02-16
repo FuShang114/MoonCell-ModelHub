@@ -35,7 +35,10 @@ public class ModelInstance {
     private Boolean responseRawEnabled;
     
     private Integer weight;   // 权重
-    private Integer maxQps;   // 最大负载限制（并发任务数）
+    private Integer rpmLimit; // 每分钟请求上限
+    private Integer tpmLimit; // 每分钟Token上限
+    // 兼容历史字段，逐步废弃
+    private Integer maxQps;
     private Boolean isActive; // 数据库中的配置状态
     
     // --- 运行时状态 (不持久化到 DB，或者异步持久化) ---
@@ -88,6 +91,24 @@ public class ModelInstance {
     public String getName() {
         return providerName + "-" + modelName;
     }
+
+    public int getEffectiveRpmLimit() {
+        if (rpmLimit != null && rpmLimit > 0) {
+            return rpmLimit;
+        }
+        if (maxQps != null && maxQps > 0) {
+            return maxQps * 60;
+        }
+        return 600;
+    }
+
+    public int getEffectiveTpmLimit() {
+        if (tpmLimit != null && tpmLimit > 0) {
+            return tpmLimit;
+        }
+        return 600000;
+    }
+
 }
 
 

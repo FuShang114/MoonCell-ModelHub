@@ -12,7 +12,8 @@ public class InstanceConfigDto {
     private String modelName;
     private String url;
     private String apiKey;
-    private Integer maxQps;
+    private Integer rpmLimit;
+    private Integer tpmLimit;
     private Boolean isActive;
     private String postModel;
     private String responseRequestIdPath;
@@ -23,7 +24,8 @@ public class InstanceConfigDto {
     public InstanceConfigDto() {}
 
     public InstanceConfigDto(Long id, String providerName, String modelName, String url,
-                             String apiKey, Integer maxQps, Boolean isActive, String postModel,
+                             String apiKey, Integer rpmLimit, Integer tpmLimit,
+                             Boolean isActive, String postModel,
                              String responseRequestIdPath, String responseContentPath, String responseSeqPath,
                              Boolean responseRawEnabled) {
         this.id = id;
@@ -31,7 +33,8 @@ public class InstanceConfigDto {
         this.modelName = modelName;
         this.url = url;
         this.apiKey = apiKey;
-        this.maxQps = maxQps;
+        this.rpmLimit = rpmLimit;
+        this.tpmLimit = tpmLimit;
         this.isActive = isActive;
         this.postModel = postModel;
         this.responseRequestIdPath = responseRequestIdPath;
@@ -55,8 +58,11 @@ public class InstanceConfigDto {
     public String getApiKey() { return apiKey; }
     public void setApiKey(String apiKey) { this.apiKey = apiKey; }
 
-    public Integer getMaxQps() { return maxQps; }
-    public void setMaxQps(Integer maxQps) { this.maxQps = maxQps; }
+    public Integer getRpmLimit() { return rpmLimit; }
+    public void setRpmLimit(Integer rpmLimit) { this.rpmLimit = rpmLimit; }
+
+    public Integer getTpmLimit() { return tpmLimit; }
+    public void setTpmLimit(Integer tpmLimit) { this.tpmLimit = tpmLimit; }
 
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }

@@ -29,10 +29,10 @@ public interface ModelInstanceMapper {
     @Insert("""
         INSERT INTO model_instance (provider_id, model_name, url, api_key, post_model,
                                     response_request_id_path, response_content_path, response_seq_path,
-                                    response_raw_enabled, weight, max_qps, is_active)
+                                    response_raw_enabled, weight, rpm_limit, tpm_limit, max_qps, is_active)
         VALUES (#{providerId}, #{modelName}, #{url}, #{apiKey}, #{postModel},
                 #{responseRequestIdPath}, #{responseContentPath}, #{responseSeqPath},
-                #{responseRawEnabled}, #{weight}, #{maxQps}, #{isActive})
+                #{responseRawEnabled}, #{weight}, #{rpmLimit}, #{tpmLimit}, #{maxQps}, #{isActive})
     """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(ModelInstance instance);
@@ -57,6 +57,8 @@ public interface ModelInstanceMapper {
             response_content_path = #{responseContentPath},
             response_seq_path = #{responseSeqPath},
             response_raw_enabled = #{responseRawEnabled},
+            rpm_limit = #{rpmLimit},
+            tpm_limit = #{tpmLimit},
             max_qps = #{maxQps},
             is_active = #{isActive}
         WHERE id = #{id}
@@ -71,6 +73,8 @@ public interface ModelInstanceMapper {
                        @Param("responseContentPath") String responseContentPath,
                        @Param("responseSeqPath") String responseSeqPath,
                        @Param("responseRawEnabled") Boolean responseRawEnabled,
+                       @Param("rpmLimit") Integer rpmLimit,
+                       @Param("tpmLimit") Integer tpmLimit,
                        @Param("maxQps") Integer maxQps,
                        @Param("isActive") Boolean isActive);
 

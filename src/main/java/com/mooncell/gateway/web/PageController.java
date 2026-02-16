@@ -26,4 +26,9 @@ public class PageController {
     public String debugPage(Model model) {
         return "debug";
     }
+
+    @GetMapping("/settings")
+    public String settingsPage(Model model) {
+        return "settings";
+    }
 }

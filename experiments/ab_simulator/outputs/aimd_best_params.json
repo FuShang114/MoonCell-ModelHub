@@ -1,0 +1,14 @@
+{
+  "min_c": 8,
+  "max_c": 96,
+  "init_c": 14,
+  "ssthresh": 24,
+  "decrease_factor": 0.75,
+  "cooldown_windows": 1,
+  "rate_limit_threshold": 0.05,
+  "burst_threshold": 0.05,
+  "p95_threshold_ms": 2200,
+  "gc_threshold": 2.0,
+  "slow_start_factor": 1.8,
+  "ai_step": 1.0
+}

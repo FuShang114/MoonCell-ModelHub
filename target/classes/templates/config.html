@@ -18,6 +18,10 @@
             line-height: 1.5;
         }
 
+        body.modal-open {
+            overflow: hidden;
+        }
+
         .app {
             display: flex;
             min-height: 100vh;
@@ -429,8 +433,10 @@
             width: 100%;
             height: 100%;
             background-color: rgba(15, 23, 42, 0.55);
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
+            padding: 24px 16px;
+            overflow-y: auto;
         }
 
         .modal-content {
@@ -440,6 +446,32 @@
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 12px 40px rgba(15, 23, 42, 0.25);
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 12px;
+            margin-top: 6px;
+            align-items: center;
+        }
+
+        .settings-grid label {
+            color: #6b7280;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .settings-hint {
+            margin-top: 10px;
+            color: #92400e;
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
         }
 
         .modal-header {
@@ -587,6 +619,10 @@
             .form-grid {
                 grid-template-columns: 1fr;
             }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -600,6 +636,7 @@
             <nav class="nav">
                 <a class="active" href="/config">监控大盘</a>
                 <a href="/admin/debug">调试台</a>
+                <a href="/settings">策略设置</a>
             </nav>
         </aside>
 
@@ -611,6 +648,7 @@
                 </div>
                 <div class="top-actions">
                     <button class="btn btn-ghost" onclick="refreshInstances()">刷新实例</button>
+                    <a class="btn btn-ghost" href="/settings">策略设置</a>
                     <a class="btn btn-primary" href="/admin/debug">进入调试</a>
                 </div>
             </div>
@@ -634,9 +672,14 @@
                         <div class="health-bar"><span id="health-bar"></span></div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-title">可用负载</div>
-                        <div class="stat-value" id="available-qps">-</div>
-                        <div class="stat-desc">当前可用并发任务数</div>
+                        <div class="stat-title">可用RPM</div>
+                        <div class="stat-value" id="available-rpm">-</div>
+                        <div class="stat-desc">当前可用请求预算</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">可用TPM</div>
+                        <div class="stat-value" id="available-tpm">-</div>
+                        <div class="stat-desc">当前可用Token预算</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-title">统计时间</div>
@@ -679,7 +722,6 @@
                                 <th>提供商</th>
                                 <th>模型</th>
                                 <th>状态</th>
-                                <th>最大负载</th>
                                 <th>请求计数</th>
                                 <th>失败次数</th>
                                 <th>最后心跳</th>
@@ -714,7 +756,8 @@
                                 <th>提供商</th>
                                 <th>模型</th>
                                 <th>URL</th>
-                                <th>最大负载</th>
+                                <th>RPM</th>
+                                <th>TPM</th>
                                 <th>启用</th>
                                 <th>模板预览</th>
                                 <th>操作</th>
@@ -722,7 +765,7 @@
                         </thead>
                         <tbody id="config-tbody">
                             <tr>
-                                <td colspan="7" style="text-align: center; color: #6b7280; padding: 1.5rem;">
+                                <td colspan="8" style="text-align: center; color: #6b7280; padding: 1.5rem;">
                                     正在加载实例配置...
                                 </td>
                             </tr>
@@ -767,8 +810,8 @@
         </main>
     </div>
 
-    <div class="modal" id="instance-modal">
-        <div class="modal-content">
+    <div class="modal" id="instance-modal" onclick="onModalBackdropClick(event, 'instance-modal', closeInstanceModal)">
+        <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <h3 id="instance-modal-title">新增实例</h3>
                 <button class="modal-close" onclick="closeInstanceModal()">✕</button>
@@ -791,8 +834,12 @@
                     <input class="input-sm" id="instance-apiKey" placeholder="sk-xxxx">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">最大负载</label>
-                    <input class="input-sm" id="instance-maxQps" type="number" min="1" placeholder="10">
+                    <label class="form-label">RPM 上限</label>
+                    <input class="input-sm" id="instance-rpmLimit" type="number" min="1" placeholder="600">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">TPM 上限</label>
+                    <input class="input-sm" id="instance-tpmLimit" type="number" min="1" placeholder="600000">
                 </div>
                 <div class="form-group">
                     <label class="form-label">启用状态</label>
@@ -848,8 +895,8 @@
         </div>
     </div>
 
-    <div class="modal" id="provider-modal">
-        <div class="modal-content">
+    <div class="modal" id="provider-modal" onclick="onModalBackdropClick(event, 'provider-modal', closeProviderModal)">
+        <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <h3 id="provider-modal-title">新增服务商</h3>
                 <button class="modal-close" onclick="closeProviderModal()">✕</button>
@@ -878,6 +925,32 @@
         let editingInstanceId = null;
         let providers = [];
         let editingProviderId = null;
+
+        function setBodyScrollLocked(locked) {
+            document.body.classList.toggle('modal-open', locked);
+        }
+
+        function onModalBackdropClick(event, modalId, closeFn) {
+            if (event.target && event.target.id === modalId) {
+                closeFn();
+            }
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modal.style.display = 'flex';
+            setBodyScrollLocked(true);
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modal.style.display = 'none';
+            const hasOpenModal = Array.from(document.querySelectorAll('.modal'))
+                .some(item => item.style.display === 'flex');
+            setBodyScrollLocked(hasOpenModal);
+        }
 
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -940,11 +1013,13 @@
         function updateStats(stats) {
             const total = stats.totalInstances || 0;
             const healthy = stats.healthyInstances || 0;
-            const availableQps = stats.availableQps || 0;
+            const availableRpm = stats.availableRpm || 0;
+            const availableTpm = stats.availableTpm || 0;
 
             document.getElementById('total-instances').textContent = total;
             document.getElementById('healthy-instances').textContent = healthy;
-            document.getElementById('available-qps').textContent = availableQps;
+            document.getElementById('available-rpm').textContent = availableRpm;
+            document.getElementById('available-tpm').textContent = availableTpm;
 
             const healthRate = total === 0 ? 0 : Math.round((healthy / total) * 100);
             document.getElementById('health-rate').textContent = healthRate + '%';
@@ -963,7 +1038,7 @@
             if (!instances || instances.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8" style="text-align: center; color: #6b7280; padding: 2rem;">
+                        <td colspan="7" style="text-align: center; color: #6b7280; padding: 2rem;">
                             暂无健康实例数据
                         </td>
                     </tr>
@@ -987,7 +1062,6 @@
                             ${statusText}
                         </span>
                     </td>
-                    <td>${instance.maxQps || 0}</td>
                     <td>${instance.requestCount || 0}</td>
                     <td style="color: ${instance.failureCount > 0 ? '#dc2626' : '#059669'}; font-weight: 600;">
                         ${instance.failureCount || 0}
@@ -1081,7 +1155,7 @@
             if (!configInstances || configInstances.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; color: #6b7280; padding: 1.5rem;">
+                        <td colspan="8" style="text-align: center; color: #6b7280; padding: 1.5rem;">
                             暂无实例配置数据
                         </td>
                     </tr>
@@ -1096,7 +1170,8 @@
                     <td><span class="provider-badge">${instance.providerName || '-'}</span></td>
                     <td style="font-weight: 600;">${instance.modelName || '-'}</td>
                     <td style="font-size: 0.8rem; color: #6b7280;">${instance.url || '-'}</td>
-                    <td>${instance.maxQps || 0}</td>
+                    <td>${instance.rpmLimit || 0}</td>
+                    <td>${instance.tpmLimit || 0}</td>
                     <td>${instance.isActive ? '是' : '否'}</td>
                     <td><div class="config-code">${escapeHtml(preview)}</div></td>
                     <td>
@@ -1114,7 +1189,8 @@
                 modelName: '',
                 url: '',
                 apiKey: '',
-                maxQps: 10,
+                rpmLimit: 600,
+                tpmLimit: 600000,
                 isActive: true,
                 postModel: '',
                 responseRequestIdPath: 'id',
@@ -1123,7 +1199,7 @@
                 responseRawEnabled: false
             });
             document.getElementById('instance-modal-title').textContent = '新增实例';
-            document.getElementById('instance-modal').style.display = 'flex';
+            openModal('instance-modal');
         }
 
         function openInstanceEditor(instanceId) {
@@ -1132,11 +1208,11 @@
             setInstanceForm(instance || {});
             document.getElementById('instance-modal-title').textContent =
                 `编辑实例 - ${instance?.providerName || ''} ${instance?.modelName || ''}`;
-            document.getElementById('instance-modal').style.display = 'flex';
+            openModal('instance-modal');
         }
 
         function closeInstanceModal() {
-            document.getElementById('instance-modal').style.display = 'none';
+            closeModal('instance-modal');
             editingInstanceId = null;
         }
 
@@ -1147,7 +1223,8 @@
             document.getElementById('instance-model').value = instance.modelName || instance.model || '';
             document.getElementById('instance-url').value = instance.url || '';
             document.getElementById('instance-apiKey').value = instance.apiKey || '';
-            document.getElementById('instance-maxQps').value = instance.maxQps || 10;
+            document.getElementById('instance-rpmLimit').value = instance.rpmLimit || 600;
+            document.getElementById('instance-tpmLimit').value = instance.tpmLimit || 600000;
             document.getElementById('instance-requestIdPath').value = instance.responseRequestIdPath || 'id';
             document.getElementById('instance-contentPath').value = instance.responseContentPath || 'choices.0.delta.content';
             document.getElementById('instance-seqPath').value = instance.responseSeqPath || 'choices.0.index';
@@ -1302,7 +1379,8 @@
                 model: document.getElementById('instance-model').value.trim(),
                 url: document.getElementById('instance-url').value.trim(),
                 apiKey: document.getElementById('instance-apiKey').value.trim(),
-                maxQps: Number(document.getElementById('instance-maxQps').value || 10),
+                rpmLimit: Number(document.getElementById('instance-rpmLimit').value || 600),
+                tpmLimit: Number(document.getElementById('instance-tpmLimit').value || 600000),
                 postModel: buildTemplateJson(),
                 responseRequestIdPath: document.getElementById('instance-requestIdPath').value.trim(),
                 responseContentPath: document.getElementById('instance-contentPath').value.trim(),
@@ -1316,7 +1394,7 @@
             document.getElementById('provider-name').value = '';
             document.getElementById('provider-desc').value = '';
             document.getElementById('provider-modal-title').textContent = '新增服务商';
-            document.getElementById('provider-modal').style.display = 'flex';
+            openModal('provider-modal');
         }
 
         function openEditProvider(providerId) {
@@ -1325,11 +1403,11 @@
             document.getElementById('provider-name').value = provider.name || '';
             document.getElementById('provider-desc').value = provider.description || '';
             document.getElementById('provider-modal-title').textContent = '编辑服务商';
-            document.getElementById('provider-modal').style.display = 'flex';
+            openModal('provider-modal');
         }
 
         function closeProviderModal() {
-            document.getElementById('provider-modal').style.display = 'none';
+            closeModal('provider-modal');
             editingProviderId = null;
         }
 
@@ -1465,6 +1543,12 @@
             if (autoRefreshInterval) {
                 clearInterval(autoRefreshInterval);
             }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key !== 'Escape') return;
+            closeInstanceModal();
+            closeProviderModal();
         });
     </script>
 </body>

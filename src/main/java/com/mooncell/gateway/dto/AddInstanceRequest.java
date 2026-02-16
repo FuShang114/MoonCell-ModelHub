@@ -34,7 +34,13 @@ public class AddInstanceRequest {
     @Schema(description = "是否原始输出", example = "false", required = false)
     private Boolean responseRawEnabled;
     
-    @Schema(description = "最大负载限制(并发任务数)", example = "10", required = false)
+    @Schema(description = "每分钟请求上限(RPM)", example = "600", required = false)
+    private Integer rpmLimit;
+
+    @Schema(description = "每分钟Token上限(TPM)", example = "600000", required = false)
+    private Integer tpmLimit;
+
+    @Schema(description = "兼容字段：旧版最大QPS，后续废弃", example = "10", required = false)
     private Integer maxQps;
 
     // Getters and Setters
@@ -65,6 +71,13 @@ public class AddInstanceRequest {
     public Boolean getResponseRawEnabled() { return responseRawEnabled; }
     public void setResponseRawEnabled(Boolean responseRawEnabled) { this.responseRawEnabled = responseRawEnabled; }
     
+    public Integer getRpmLimit() { return rpmLimit; }
+    public void setRpmLimit(Integer rpmLimit) { this.rpmLimit = rpmLimit; }
+
+    public Integer getTpmLimit() { return tpmLimit; }
+    public void setTpmLimit(Integer tpmLimit) { this.tpmLimit = tpmLimit; }
+
     public Integer getMaxQps() { return maxQps; }
+
     public void setMaxQps(Integer maxQps) { this.maxQps = maxQps; }
 }
