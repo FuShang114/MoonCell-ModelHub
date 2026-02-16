@@ -12,6 +12,8 @@ env:
   IMAGE_NAME: mooncell-gateway
   CONTAINER_NAME: mooncell-gateway
   APP_PORT: "9061"
+  REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
 jobs:
   ci:
@@ -48,11 +50,11 @@ jobs:
 
       - name: Log in to registry (optional)
         uses: docker/login-action@v3
-        if: ${{ secrets.REGISTRY_USERNAME != '' && secrets.REGISTRY_PASSWORD != '' }}
+        if: ${{ env.REGISTRY_USERNAME != '' && env.REGISTRY_PASSWORD != '' }}
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ env.REGISTRY_PASSWORD }}
 
       - name: Extract metadata (tags, labels)
         id: meta
@@ -88,8 +90,8 @@ jobs:
           port: ${{ secrets.SERVER_SSH_PORT }}
           script: |
             set -e
-            if [ -n "${{ secrets.REGISTRY_USERNAME }}" ] && [ -n "${{ secrets.REGISTRY_PASSWORD }}" ]; then
-              docker login ${{ env.REGISTRY }} -u "${{ secrets.REGISTRY_USERNAME }}" -p "${{ secrets.REGISTRY_PASSWORD }}"
+            if [ -n "${{ env.REGISTRY_USERNAME }}" ] && [ -n "${{ env.REGISTRY_PASSWORD }}" ]; then
+              docker login ${{ env.REGISTRY }} -u "${{ env.REGISTRY_USERNAME }}" -p "${{ env.REGISTRY_PASSWORD }}"
             else
               echo "Registry is anonymous, skip docker login."
             fi
