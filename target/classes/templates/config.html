@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonCell Gateway 监控台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fb;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: #111827;
+            color: #e5e7eb;
+            padding: 20px 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 28px;
+        }
+
+        .brand-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav a {
+            color: #e5e7eb;
+            text-decoration: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .nav a.active,
+        .nav a:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: #fff;
+        }
+
+        .content {
+            flex: 1;
+            padding: 24px 28px 36px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .title-group h1 {
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+        }
+
+        .title-group p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.6rem 1.1rem;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-ghost {
+            background: #fff;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-ghost:hover {
+            border-color: #cbd5f5;
+            color: #1d4ed8;
+        }
+
+        .dashboard {
+            display: grid;
+            gap: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: #fff;
+            padding: 16px 18px;
+            border-radius: 12px;
+            border: 1px solid #eef1f7;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        }
+
+        .stat-title {
+            color: #6b7280;
+            font-size: 0.8rem;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: #111827;
+            margin: 8px 0 4px;
+        }
+
+        .stat-desc {
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+
+        .health-bar {
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .health-bar span {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .instances-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid #eef1f7;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .section-title h2 {
+            font-size: 1.2rem;
+        }
+
+        .section-meta {
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+
+        .filters {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filters .legend {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+        }
+
+        .legend-dot.ok {
+            background: #22c55e;
+        }
+
+        .legend-dot.bad {
+            background: #ef4444;
+        }
+
+        .auto-refresh {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .refresh-toggle {
+            background: #fff;
+            border: 1px solid #dbe1f2;
+            color: #1d4ed8;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .refresh-toggle.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .instances-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .instances-table th,
+        .instances-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #eef1f7;
+        }
+
+        .instances-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.5px;
+        }
+
+        .instances-table tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-healthy {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-unhealthy {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .status-healthy .status-dot {
+            background-color: #22c55e;
+        }
+
+        .status-unhealthy .status-dot {
+            background-color: #ef4444;
+        }
+
+        .provider-badge {
+            background-color: #eef2ff;
+            color: #4338ca;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4f46e5;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .success-message {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .config-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid #eef1f7;
+        }
+
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .config-table th,
+        .config-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border-bottom: 1px solid #eef1f7;
+            vertical-align: middle;
+        }
+
+        .config-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.5px;
+        }
+
+        .config-code {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.78rem;
+            color: #374151;
+            max-width: 420px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            display: inline-block;
+            text-align: left;
+            max-height: 88px;
+            overflow: auto;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.55);
+            align-items: flex-start;
+            justify-content: center;
+            padding: 24px 16px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: #fff;
+            width: 90%;
+            max-width: 880px;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 12px 40px rgba(15, 23, 42, 0.25);
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 12px;
+            margin-top: 6px;
+            align-items: center;
+        }
+
+        .settings-grid label {
+            color: #6b7280;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .settings-hint {
+            margin-top: 10px;
+            color: #92400e;
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.1rem;
+        }
+
+        .modal-close {
+            border: none;
+            background: transparent;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .template-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+
+        .template-table th,
+        .template-table td {
+            padding: 0.6rem;
+            border-bottom: 1px solid #eef1f7;
+            text-align: left;
+        }
+
+        .template-table th {
+            background: #f8fafc;
+            font-size: 0.72rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .input-sm,
+        .select-sm {
+            width: 100%;
+            padding: 0.45rem 0.6rem;
+            border: 1px solid #dbe1f2;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-outline {
+            background: #fff;
+            color: #2563eb;
+            border: 1px solid #c7d2fe;
+        }
+
+        .btn-outline:hover {
+            border-color: #2563eb;
+        }
+
+        .hint {
+            color: #6b7280;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .nav {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .content {
+                padding: 18px;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .instances-table {
+                font-size: 0.8rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-badge">MC</span>
+                MoonCell Gateway
+            </div>
+            <nav class="nav">
+                <a class="active" href="/config">监控大盘</a>
+                <a href="/admin/debug">调试台</a>
+                <a href="/settings">策略设置</a>
+            </nav>
+        </aside>
+
+        <main class="content">
+            <div class="topbar">
+                <div class="title-group">
+                    <h1>模型健康监控</h1>
+                    <p>仿 Nacos 风格的网关监控视图，实时聚合所有大模型实例状态</p>
+                </div>
+                <div class="top-actions">
+                    <button class="btn btn-ghost" onclick="refreshInstances()">刷新实例</button>
+                    <a class="btn btn-ghost" href="/settings">策略设置</a>
+                    <a class="btn btn-primary" href="/admin/debug">进入调试</a>
+                </div>
+            </div>
+
+            <div class="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-title">总实例数</div>
+                        <div class="stat-value" id="total-instances">-</div>
+                        <div class="stat-desc">包含所有提供商节点</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">健康实例</div>
+                        <div class="stat-value" id="healthy-instances">-</div>
+                        <div class="stat-desc">已通过心跳检测</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">健康率</div>
+                        <div class="stat-value" id="health-rate">-</div>
+                        <div class="stat-desc">健康实例占比</div>
+                        <div class="health-bar"><span id="health-bar"></span></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">可用RPM</div>
+                        <div class="stat-value" id="available-rpm">-</div>
+                        <div class="stat-desc">当前可用请求预算</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">可用TPM</div>
+                        <div class="stat-value" id="available-tpm">-</div>
+                        <div class="stat-desc">当前可用Token预算</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">统计时间</div>
+                        <div class="stat-value" id="last-reset">-</div>
+                        <div class="stat-desc">统计更新时间</div>
+                    </div>
+                </div>
+
+                <div class="error-message" id="error-message"></div>
+                <div class="success-message" id="success-message"></div>
+
+                <div class="instances-section">
+                    <div class="section-title">
+                        <h2>实例健康详情</h2>
+                        <span class="section-meta" id="last-update">最后更新: -</span>
+                    </div>
+
+                    <div class="filters">
+                        <div class="legend">
+                            <span class="legend-dot ok"></span>健康
+                            <span class="legend-dot bad"></span>异常
+                        </div>
+                        <div class="auto-refresh">
+                            <span style="font-size: 0.85rem; color: #6b7280;">自动刷新</span>
+                            <button class="refresh-toggle" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
+                                开启
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>正在加载健康节点数据...</p>
+                    </div>
+
+                    <table class="instances-table" id="instances-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>节点名称</th>
+                                <th>提供商</th>
+                                <th>模型</th>
+                                <th>状态</th>
+                                <th>请求计数</th>
+                                <th>失败次数</th>
+                                <th>最后心跳</th>
+                            </tr>
+                        </thead>
+                        <tbody id="instances-tbody">
+                            <!-- 数据将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="config-section" id="instance-config">
+                    <div class="section-title">
+                        <h2>实例列表</h2>
+                        <span class="section-meta">支持新增/编辑实例与请求体模板</span>
+                    </div>
+
+                    <div class="filters">
+                        <div class="legend">
+                            <span class="legend-dot ok"></span>使用 $messages
+                            <span class="legend-dot bad"></span>使用 $model
+                        </div>
+                        <div class="auto-refresh">
+                            <button class="btn btn-primary" onclick="openCreateInstance()">+ 新增实例</button>
+                            <button class="btn btn-ghost" onclick="loadConfigInstances()">刷新配置</button>
+                        </div>
+                    </div>
+
+                    <table class="config-table" id="config-table">
+                        <thead>
+                            <tr>
+                                <th>提供商</th>
+                                <th>模型</th>
+                                <th>URL</th>
+                                <th>RPM</th>
+                                <th>TPM</th>
+                                <th>启用</th>
+                                <th>模板预览</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="config-tbody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #6b7280; padding: 1.5rem;">
+                                    正在加载实例配置...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="config-section" id="provider-config" style="margin-top: 16px;">
+                    <div class="section-title">
+                        <h2>模型服务商管理</h2>
+                        <span class="section-meta">维护服务商名称与描述</span>
+                    </div>
+
+                    <div class="filters">
+                        <div class="legend">
+                            <span class="legend-dot ok"></span>服务商可用于实例配置
+                        </div>
+                        <div class="auto-refresh">
+                            <button class="btn btn-primary" onclick="openCreateProvider()">+ 新增服务商</button>
+                            <button class="btn btn-ghost" onclick="loadProviders()">刷新服务商</button>
+                        </div>
+                    </div>
+
+                    <table class="config-table" id="provider-table">
+                        <thead>
+                            <tr>
+                                <th>服务商名称</th>
+                                <th>描述</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="provider-tbody">
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: #6b7280; padding: 1.5rem;">
+                                    正在加载服务商数据...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="instance-modal" onclick="onModalBackdropClick(event, 'instance-modal', closeInstanceModal)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="instance-modal-title">新增实例</h3>
+                <button class="modal-close" onclick="closeInstanceModal()">✕</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">服务商</label>
+                    <select class="select-sm" id="instance-provider"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">模型</label>
+                    <input class="input-sm" id="instance-model" placeholder="gpt-4 / deepseek-chat">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">URL</label>
+                    <input class="input-sm" id="instance-url" placeholder="https://api.openai.com/v1/chat/completions">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">API Key</label>
+                    <input class="input-sm" id="instance-apiKey" placeholder="sk-xxxx">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">RPM 上限</label>
+                    <input class="input-sm" id="instance-rpmLimit" type="number" min="1" placeholder="600">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">TPM 上限</label>
+                    <input class="input-sm" id="instance-tpmLimit" type="number" min="1" placeholder="600000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">启用状态</label>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="instance-active" checked>
+                        <span style="font-size: 0.85rem; color: #6b7280;">启用该实例</span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="hint">请求体模板字段值可选择固定值、$model 或 $messages。固定值支持输入 JSON（如数组或对象）。</p>
+            <table class="template-table">
+                <thead>
+                    <tr>
+                        <th style="width: 28%;">字段名</th>
+                        <th style="width: 22%;">值类型</th>
+                        <th>值</th>
+                        <th style="width: 10%;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="template-rows">
+                    <!-- 动态行 -->
+                </tbody>
+            </table>
+            <div class="row-actions">
+                <button class="btn btn-outline" onclick="addTemplateRow()">+ 添加字段</button>
+            </div>
+            <div class="form-grid" style="margin-top: 12px;">
+                <div class="form-group">
+                    <label class="form-label">requestId 路径</label>
+                    <input class="input-sm" id="instance-requestIdPath" placeholder="id">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">content 路径</label>
+                    <input class="input-sm" id="instance-contentPath" placeholder="choices.0.delta.content">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">seq 路径</label>
+                    <input class="input-sm" id="instance-seqPath" placeholder="choices.0.index">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">原始输出</label>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="instance-rawEnabled">
+                        <span style="font-size: 0.85rem; color: #6b7280;">直接透传下游响应</span>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-ghost" onclick="closeInstanceModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveInstance()">保存实例</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="provider-modal" onclick="onModalBackdropClick(event, 'provider-modal', closeProviderModal)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="provider-modal-title">新增服务商</h3>
+                <button class="modal-close" onclick="closeProviderModal()">✕</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">服务商名称</label>
+                    <input class="input-sm" id="provider-name" placeholder="openai / azure / ark">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">描述</label>
+                    <input class="input-sm" id="provider-desc" placeholder="服务商说明">
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-ghost" onclick="closeProviderModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveProvider()">保存服务商</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval;
+        let isAutoRefreshEnabled = false;
+        let configInstances = [];
+        let editingInstanceId = null;
+        let providers = [];
+        let editingProviderId = null;
+
+        function setBodyScrollLocked(locked) {
+            document.body.classList.toggle('modal-open', locked);
+        }
+
+        function onModalBackdropClick(event, modalId, closeFn) {
+            if (event.target && event.target.id === modalId) {
+                closeFn();
+            }
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modal.style.display = 'flex';
+            setBodyScrollLocked(true);
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modal.style.display = 'none';
+            const hasOpenModal = Array.from(document.querySelectorAll('.modal'))
+                .some(item => item.style.display === 'flex');
+            setBodyScrollLocked(hasOpenModal);
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            loadConfigInstances();
+            loadProviders();
+            setInterval(updateLastUpdateTime, 1000);
+        });
+
+        // 切换自动刷新
+        function toggleAutoRefresh() {
+            const btn = document.getElementById('auto-refresh-btn');
+            
+            if (isAutoRefreshEnabled) {
+                clearInterval(autoRefreshInterval);
+                btn.textContent = '开启';
+                btn.classList.remove('active');
+                isAutoRefreshEnabled = false;
+            } else {
+                autoRefreshInterval = setInterval(loadData, 10000); // 每10秒刷新
+                btn.textContent = '关闭';
+                btn.classList.add('active');
+                isAutoRefreshEnabled = true;
+            }
+        }
+
+        // 加载数据
+        async function loadData() {
+            try {
+                showLoading(true);
+                hideMessages();
+
+                // 并行加载统计数据和实例数据
+                const [statsResponse, instancesResponse] = await Promise.all([
+                    fetch('/admin/instance-stats'),
+                    fetch('/admin/healthy-instances')
+                ]);
+
+                if (!statsResponse.ok || !instancesResponse.ok) {
+                    throw new Error('数据加载失败');
+                }
+
+                const stats = await statsResponse.json();
+                const instances = await instancesResponse.json();
+
+                updateStats(stats);
+                updateInstancesTable(instances);
+
+                showSuccess('数据加载成功');
+
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                showError('加载数据失败: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 更新统计数据
+        function updateStats(stats) {
+            const total = stats.totalInstances || 0;
+            const healthy = stats.healthyInstances || 0;
+            const availableRpm = stats.availableRpm || 0;
+            const availableTpm = stats.availableTpm || 0;
+
+            document.getElementById('total-instances').textContent = total;
+            document.getElementById('healthy-instances').textContent = healthy;
+            document.getElementById('available-rpm').textContent = availableRpm;
+            document.getElementById('available-tpm').textContent = availableTpm;
+
+            const healthRate = total === 0 ? 0 : Math.round((healthy / total) * 100);
+            document.getElementById('health-rate').textContent = healthRate + '%';
+            document.getElementById('health-bar').style.width = healthRate + '%';
+
+            const lastReset = new Date(stats.lastWindowReset);
+            document.getElementById('last-reset').textContent =
+                isNaN(lastReset.getTime()) ? '-' : lastReset.toLocaleTimeString();
+        }
+
+        // 更新实例表格
+        function updateInstancesTable(instances) {
+            const tbody = document.getElementById('instances-tbody');
+            tbody.innerHTML = '';
+
+            if (!instances || instances.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #6b7280; padding: 2rem;">
+                            暂无健康实例数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            instances.forEach(instance => {
+                const row = document.createElement('tr');
+                
+                const statusClass = instance.healthy ? 'status-healthy' : 'status-unhealthy';
+                const statusText = instance.healthy ? '健康' : '不健康';
+                
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${instance.name || '-'}</td>
+                    <td><span class="provider-badge">${instance.providerName || '-'}</span></td>
+                    <td style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem;">${instance.modelName || '-'}</td>
+                    <td>
+                        <span class="status-badge ${statusClass}">
+                            <span class="status-dot"></span>
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td>${instance.requestCount || 0}</td>
+                    <td style="color: ${instance.failureCount > 0 ? '#dc2626' : '#059669'}; font-weight: 600;">
+                        ${instance.failureCount || 0}
+                    </td>
+                    <td style="font-size: 0.8rem; color: #6b7280;">${instance.lastHeartbeat || '-'}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // 加载实例配置
+        async function loadConfigInstances() {
+            try {
+                const response = await fetch('/admin/instances');
+                if (!response.ok) {
+                    throw new Error('加载实例配置失败');
+                }
+                configInstances = await response.json();
+                updateConfigTable();
+            } catch (error) {
+                console.error('加载实例配置失败:', error);
+                showError('加载实例配置失败: ' + error.message);
+            }
+        }
+
+        async function loadProviders() {
+            try {
+                const response = await fetch('/admin/providers');
+                if (!response.ok) {
+                    throw new Error('加载服务商失败');
+                }
+                providers = await response.json();
+                updateProviderTable();
+                updateProviderSelect();
+            } catch (error) {
+                console.error('加载服务商失败:', error);
+                showError('加载服务商失败: ' + error.message);
+            }
+        }
+
+        function updateProviderTable() {
+            const tbody = document.getElementById('provider-tbody');
+            tbody.innerHTML = '';
+            if (!providers || providers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #6b7280; padding: 1.5rem;">
+                            暂无服务商数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            providers.forEach(provider => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-weight: 600;">${provider.name || '-'}</td>
+                    <td style="color: #6b7280;">${provider.description || '-'}</td>
+                    <td>
+                        <button class="btn btn-outline" onclick="openEditProvider(${provider.id})">编辑</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateProviderSelect() {
+            const select = document.getElementById('instance-provider');
+            if (!select) return;
+            select.innerHTML = '';
+            if (!providers || providers.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '暂无服务商';
+                select.appendChild(option);
+                return;
+            }
+            providers.forEach(provider => {
+                const option = document.createElement('option');
+                option.value = provider.name;
+                option.textContent = provider.name;
+                select.appendChild(option);
+            });
+        }
+
+        function updateConfigTable() {
+            const tbody = document.getElementById('config-tbody');
+            tbody.innerHTML = '';
+
+            if (!configInstances || configInstances.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #6b7280; padding: 1.5rem;">
+                            暂无实例配置数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            configInstances.forEach(instance => {
+                const row = document.createElement('tr');
+                const preview = instance.postModel ? instance.postModel : '{"stream":true,"messages":"$messages"}';
+                row.innerHTML = `
+                    <td><span class="provider-badge">${instance.providerName || '-'}</span></td>
+                    <td style="font-weight: 600;">${instance.modelName || '-'}</td>
+                    <td style="font-size: 0.8rem; color: #6b7280;">${instance.url || '-'}</td>
+                    <td>${instance.rpmLimit || 0}</td>
+                    <td>${instance.tpmLimit || 0}</td>
+                    <td>${instance.isActive ? '是' : '否'}</td>
+                    <td><div class="config-code">${escapeHtml(preview)}</div></td>
+                    <td>
+                        <button class="btn btn-outline" onclick="openInstanceEditor(${instance.id})">编辑</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function openCreateInstance() {
+            editingInstanceId = null;
+            setInstanceForm({
+                providerName: '',
+                modelName: '',
+                url: '',
+                apiKey: '',
+                rpmLimit: 600,
+                tpmLimit: 600000,
+                isActive: true,
+                postModel: '',
+                responseRequestIdPath: 'id',
+                responseContentPath: 'choices.0.delta.content',
+                responseSeqPath: 'choices.0.index',
+                responseRawEnabled: false
+            });
+            document.getElementById('instance-modal-title').textContent = '新增实例';
+            openModal('instance-modal');
+        }
+
+        function openInstanceEditor(instanceId) {
+            editingInstanceId = instanceId;
+            const instance = configInstances.find(item => item.id === instanceId);
+            setInstanceForm(instance || {});
+            document.getElementById('instance-modal-title').textContent =
+                `编辑实例 - ${instance?.providerName || ''} ${instance?.modelName || ''}`;
+            openModal('instance-modal');
+        }
+
+        function closeInstanceModal() {
+            closeModal('instance-modal');
+            editingInstanceId = null;
+        }
+
+        function setInstanceForm(instance) {
+            const providerSelect = document.getElementById('instance-provider');
+            updateProviderSelect();
+            providerSelect.value = instance.providerName || instance.provider || '';
+            document.getElementById('instance-model').value = instance.modelName || instance.model || '';
+            document.getElementById('instance-url').value = instance.url || '';
+            document.getElementById('instance-apiKey').value = instance.apiKey || '';
+            document.getElementById('instance-rpmLimit').value = instance.rpmLimit || 600;
+            document.getElementById('instance-tpmLimit').value = instance.tpmLimit || 600000;
+            document.getElementById('instance-requestIdPath').value = instance.responseRequestIdPath || 'id';
+            document.getElementById('instance-contentPath').value = instance.responseContentPath || 'choices.0.delta.content';
+            document.getElementById('instance-seqPath').value = instance.responseSeqPath || 'choices.0.index';
+            document.getElementById('instance-rawEnabled').checked = instance.responseRawEnabled === true;
+            document.getElementById('instance-active').checked = instance.isActive !== false;
+
+            const tbody = document.getElementById('template-rows');
+            tbody.innerHTML = '';
+            const rows = parseTemplateToRows(instance.postModel);
+            if (rows.length === 0) {
+                addTemplateRow();
+            } else {
+                rows.forEach(row => addTemplateRow(row.key, row.type, row.value));
+            }
+        }
+
+        function addTemplateRow(key = '', type = 'fixed', value = '') {
+            const tbody = document.getElementById('template-rows');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input class="input-sm" value="${escapeHtml(key)}" placeholder="字段名"></td>
+                <td>
+                    <select class="select-sm" onchange="onValueTypeChange(this)">
+                        <option value="fixed" ${type === 'fixed' ? 'selected' : ''}>固定值</option>
+                        <option value="model" ${type === 'model' ? 'selected' : ''}>$model</option>
+                        <option value="messages" ${type === 'messages' ? 'selected' : ''}>$messages</option>
+                    </select>
+                </td>
+                <td><input class="input-sm" value="${escapeHtml(value)}" placeholder="值或JSON"></td>
+                <td>
+                    <button class="btn btn-danger" onclick="removeTemplateRow(this)">删除</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            const select = row.querySelector('select');
+            onValueTypeChange(select);
+        }
+
+        function removeTemplateRow(btn) {
+            const row = btn.closest('tr');
+            if (row) row.remove();
+        }
+
+        function onValueTypeChange(select) {
+            const row = select.closest('tr');
+            const inputs = row.querySelectorAll('input');
+            const input = inputs.length > 1 ? inputs[1] : null;
+            if (!input) return;
+            if (select.value === 'fixed') {
+                input.disabled = false;
+                input.placeholder = '值或JSON';
+            } else {
+                input.disabled = true;
+                input.value = '';
+                input.placeholder = select.value === 'model' ? '$model' : '$messages';
+            }
+        }
+
+        function parseTemplateToRows(postModel) {
+            if (!postModel || postModel.trim() === '') {
+                return [];
+            }
+            try {
+                const obj = JSON.parse(postModel);
+                if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+                    return [];
+                }
+                return Object.keys(obj).map(key => {
+                    const value = obj[key];
+                    if (value === '$model') {
+                        return { key, type: 'model', value: '' };
+                    }
+                    if (value === '$messages') {
+                        return { key, type: 'messages', value: '' };
+                    }
+                    if (typeof value === 'object') {
+                        return { key, type: 'fixed', value: JSON.stringify(value) };
+                    }
+                    return { key, type: 'fixed', value: String(value) };
+                });
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function buildTemplateJson() {
+            const rows = document.querySelectorAll('#template-rows tr');
+            const result = {};
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                const key = inputs[0].value.trim();
+                const valueInput = inputs[1];
+                const type = row.querySelector('select').value;
+                if (!key) {
+                    return;
+                }
+                if (type === 'model') {
+                    result[key] = '$model';
+                } else if (type === 'messages') {
+                    result[key] = '$messages';
+                } else {
+                    const raw = valueInput.value.trim();
+                    result[key] = parseJsonOrString(raw);
+                }
+            });
+            return JSON.stringify(result, null, 2);
+        }
+
+        async function saveInstance() {
+            const payload = buildInstancePayload();
+            if (!payload.provider || !payload.model || !payload.url) {
+                showError('请填写服务商、模型与URL');
+                return;
+            }
+            if (!payload.apiKey) {
+                showError('请填写 API Key');
+                return;
+            }
+            try {
+                let response;
+                if (editingInstanceId) {
+                    const active = document.getElementById('instance-active').checked ? 'true' : 'false';
+                    response = await fetch(`/admin/instances/${editingInstanceId}?active=${active}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    response = await fetch('/admin/instances', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                if (!response.ok) {
+                    throw new Error('保存失败');
+                }
+                showSuccess('实例保存成功');
+                closeInstanceModal();
+                await loadConfigInstances();
+                await loadData();
+            } catch (error) {
+                console.error('保存实例失败:', error);
+                showError('保存实例失败: ' + error.message);
+            }
+        }
+
+        function buildInstancePayload() {
+            return {
+                provider: document.getElementById('instance-provider').value.trim(),
+                model: document.getElementById('instance-model').value.trim(),
+                url: document.getElementById('instance-url').value.trim(),
+                apiKey: document.getElementById('instance-apiKey').value.trim(),
+                rpmLimit: Number(document.getElementById('instance-rpmLimit').value || 600),
+                tpmLimit: Number(document.getElementById('instance-tpmLimit').value || 600000),
+                postModel: buildTemplateJson(),
+                responseRequestIdPath: document.getElementById('instance-requestIdPath').value.trim(),
+                responseContentPath: document.getElementById('instance-contentPath').value.trim(),
+                responseSeqPath: document.getElementById('instance-seqPath').value.trim(),
+                responseRawEnabled: document.getElementById('instance-rawEnabled').checked
+            };
+        }
+
+        function openCreateProvider() {
+            editingProviderId = null;
+            document.getElementById('provider-name').value = '';
+            document.getElementById('provider-desc').value = '';
+            document.getElementById('provider-modal-title').textContent = '新增服务商';
+            openModal('provider-modal');
+        }
+
+        function openEditProvider(providerId) {
+            editingProviderId = providerId;
+            const provider = providers.find(item => item.id === providerId) || {};
+            document.getElementById('provider-name').value = provider.name || '';
+            document.getElementById('provider-desc').value = provider.description || '';
+            document.getElementById('provider-modal-title').textContent = '编辑服务商';
+            openModal('provider-modal');
+        }
+
+        function closeProviderModal() {
+            closeModal('provider-modal');
+            editingProviderId = null;
+        }
+
+        async function saveProvider() {
+            const name = document.getElementById('provider-name').value.trim();
+            const description = document.getElementById('provider-desc').value.trim();
+            if (!name) {
+                showError('请填写服务商名称');
+                return;
+            }
+            try {
+                let response;
+                if (editingProviderId) {
+                    response = await fetch(`/admin/providers/${editingProviderId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, description })
+                    });
+                } else {
+                    response = await fetch('/admin/providers', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, description })
+                    });
+                }
+                if (!response.ok) {
+                    throw new Error('保存服务商失败');
+                }
+                showSuccess('服务商保存成功');
+                closeProviderModal();
+                await loadProviders();
+            } catch (error) {
+                console.error('保存服务商失败:', error);
+                showError('保存服务商失败: ' + error.message);
+            }
+        }
+
+        function parseJsonOrString(raw) {
+            if (raw === '') {
+                return '';
+            }
+            try {
+                return JSON.parse(raw);
+            } catch (e) {
+                return raw;
+            }
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // 刷新实例列表
+        async function refreshInstances() {
+            try {
+                showLoading(true);
+                showSuccess('正在刷新实例列表...');
+
+                const response = await fetch('/admin/refresh-instances');
+                
+                if (!response.ok) {
+                    throw new Error('刷新失败');
+                }
+
+                showSuccess('实例列表刷新成功');
+                await loadData(); // 重新加载数据
+
+            } catch (error) {
+                console.error('刷新失败:', error);
+                showError('刷新失败: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('instances-table');
+            
+            if (show) {
+                loading.style.display = 'block';
+                table.style.display = 'none';
+            } else {
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            }
+        }
+
+        // 显示错误消息
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // 显示成功消息
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success-message');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // 隐藏所有消息
+        function hideMessages() {
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+        }
+
+        // 更新最后更新时间
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('last-update').textContent = 
+                '最后更新: ' + now.toLocaleTimeString();
+        }
+
+        // 页面卸载时清理定时器
+        window.addEventListener('beforeunload', function() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key !== 'Escape') return;
+            closeInstanceModal();
+            closeProviderModal();
+        });
+    </script>
+</body>
+</html>

@@ -1,3 +1,0 @@
-scenario,static_rpm,adaptive_rpm,static_max_util,adaptive_max_util,static_ttft_p95_ms,adaptive_ttft_p95_ms,static_gc_avg,adaptive_gc_avg,static_reject_rate,adaptive_reject_rate,adaptive_boundaries,adaptive_shares
-mixed_bursty,4011.18,4388.9,0.56,0.6764,1305.17,1312.65,0.5578,0.6834,0.5167,0.4712,"[329, 1020, 2499]","[0.2573, 0.2476, 0.2476, 0.2476]"
-token_heavy,341.4,999.31,0.2064,0.838,1358.46,1431.46,0.1256,0.5678,0.9593,0.8809,"[1913, 2609, 2979]","[0.25, 0.25, 0.25, 0.25]"
