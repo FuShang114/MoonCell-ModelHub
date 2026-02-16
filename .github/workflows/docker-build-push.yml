@@ -9,6 +9,7 @@ on:
 
 env:
   REGISTRY: ${{ secrets.REGISTRY_HOST }}
+  DEPLOY_REGISTRY: ${{ secrets.DEPLOY_REGISTRY_HOST }}
   IMAGE_NAME: mooncell-gateway
   CONTAINER_NAME: mooncell-gateway
   APP_PORT: "9061"
@@ -103,8 +104,14 @@ jobs:
           command_timeout: 240m
           script: |
             set -ex
+
+            DEPLOY_REG="${{ env.DEPLOY_REGISTRY }}"
+            if [ -z "$DEPLOY_REG" ]; then
+              DEPLOY_REG="127.0.0.1:5000"
+            fi
+
             if [ -n "${{ env.REGISTRY_USERNAME }}" ] && [ -n "${{ env.REGISTRY_PASSWORD }}" ]; then
-              docker login ${{ env.REGISTRY }} -u "${{ env.REGISTRY_USERNAME }}" -p "${{ env.REGISTRY_PASSWORD }}"
+              docker login "$DEPLOY_REG" -u "${{ env.REGISTRY_USERNAME }}" -p "${{ env.REGISTRY_PASSWORD }}"
             else
               echo "Registry is anonymous, skip docker login."
             fi
@@ -126,7 +133,17 @@ jobs:
               return 1
             }
 
-            pull_with_retry ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            TARGET_IMAGE="$DEPLOY_REG/${{ env.IMAGE_NAME }}:latest"
+
+            CURRENT_ID="$(docker image inspect -f '{{.Id}}' "$TARGET_IMAGE" 2>/dev/null || true)"
+            pull_with_retry "$TARGET_IMAGE"
+            NEW_ID="$(docker image inspect -f '{{.Id}}' "$TARGET_IMAGE" 2>/dev/null || true)"
+
+            if [ -n "$CURRENT_ID" ] && [ "$CURRENT_ID" = "$NEW_ID" ]; then
+              echo "Image unchanged ($NEW_ID), skip container restart."
+              docker ps --filter "name=${{ env.CONTAINER_NAME }}" --format '{{.Names}} {{.Status}}'
+              exit 0
+            fi
 
             docker stop ${{ env.CONTAINER_NAME }} || true
             docker rm ${{ env.CONTAINER_NAME }} || true
@@ -143,5 +160,4 @@ jobs:
               -e SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR="host.docker.internal:8848" \
               -e SPRING_CLOUD_NACOS_DISCOVERY_NAMESPACE="public" \
               -e SPRING_CLOUD_NACOS_DISCOVERY_GROUP="DEFAULT_GROUP" \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            docker image prune -f
+              "$TARGET_IMAGE"
