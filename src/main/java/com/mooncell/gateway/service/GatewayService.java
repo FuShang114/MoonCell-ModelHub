@@ -89,7 +89,8 @@ public class GatewayService {
 
         // 2. 从负载均衡获取一个可用实例（整合RPM/TPM限流）
         int estimatedTokens = estimateTotalTokens(rawMessage);
-        ModelInstance instance = loadBalancer.getNextAvailableInstance(estimatedTokens);
+        LoadBalancer.InstanceLease lease = loadBalancer.acquireLease(estimatedTokens);
+        ModelInstance instance = lease != null ? lease.getInstance() : null;
 
         if (instance == null) {
             stringRedisTemplate.delete(redisKey);
@@ -104,6 +105,7 @@ public class GatewayService {
 
         WebClient client = webClientBuilder.build();
         ModelInstance finalInstance = instance;
+        String leaseId = lease != null ? lease.getLeaseId() : null;
 
         AtomicInteger seqCounter = new AtomicInteger(0);
 
@@ -132,7 +134,11 @@ public class GatewayService {
                 .doOnComplete(() -> finalInstance.recordSuccess(0))
                 .doFinally(signalType -> {
                     // 异常安全的资源释放
-                    loadBalancer.releaseInstance(finalInstance);
+                    if (leaseId != null) {
+                        loadBalancer.releaseLease(leaseId);
+                    } else {
+                        loadBalancer.releaseInstance(finalInstance);
+                    }
                     stringRedisTemplate.delete(redisKey);
                 });
     }

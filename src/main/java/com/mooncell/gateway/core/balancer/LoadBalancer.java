@@ -2,13 +2,16 @@ package com.mooncell.gateway.core.balancer;
 
 import com.mooncell.gateway.core.dao.ModelInstanceMapper;
 import com.mooncell.gateway.core.model.ModelInstance;
+import com.mooncell.gateway.dto.StrategyStatusDto;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -24,16 +28,25 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LoadBalancer {
     private final ModelInstanceMapper modelMapper;
-    private final Map<LoadBalancingAlgorithm, LoadBalancingStrategy> strategyCache = new ConcurrentHashMap<>();
+    private final AtomicLong runtimeSeq = new AtomicLong(0);
+    private final AtomicLong leaseSeq = new AtomicLong(0);
+    private final CopyOnWriteArrayList<StrategyRuntime> runtimes = new CopyOnWriteArrayList<>();
+    private final Map<String, LeaseContext> activeLeases = new ConcurrentHashMap<>();
+    private final ArrayDeque<Integer> tokenHistogram = new ArrayDeque<>();
+    private final Object histogramLock = new Object();
+    private volatile int shortBoundaryTokens = 512;
+    private volatile int mediumBoundaryTokens = 2048;
+    private volatile long lastBoundaryUpdateMs = 0L;
     private volatile LoadBalancingSettings settings = LoadBalancingSettings.defaultSettings();
-    private volatile LoadBalancingAlgorithm currentAlgorithm = LoadBalancingAlgorithm.TRADITIONAL;
-    private volatile LoadBalancingStrategy activeStrategy;
+    private volatile StrategyRuntime activeRuntime;
 
     @PostConstruct
     public void init() {
-        activeStrategy = createStrategy(settings.getAlgorithm());
-        strategyCache.put(settings.getAlgorithm(), activeStrategy);
-        activeStrategy.onActivate(settings.copy());
+        StrategyRuntime runtime = createRuntime(settings.getAlgorithm(), settings.copy());
+        runtime.state = RuntimeState.ACTIVE;
+        runtime.strategy.onActivate(settings.copy());
+        activeRuntime = runtime;
+        runtimes.add(runtime);
         refreshInstances();
     }
 
@@ -41,28 +54,41 @@ public class LoadBalancer {
         if (newSettings == null) {
             return;
         }
-        int normalizedCore = Math.max(1, newSettings.getObjectPoolCoreSize());
-        int normalizedMax = Math.max(normalizedCore, newSettings.getObjectPoolMaxSize());
-        newSettings.setObjectPoolCoreSize(normalizedCore);
-        newSettings.setObjectPoolMaxSize(normalizedMax);
         LoadBalancingAlgorithm newAlgorithm = newSettings.getAlgorithm() == null
                 ? LoadBalancingAlgorithm.TRADITIONAL : newSettings.getAlgorithm();
         settings = newSettings.copy();
-        if (newAlgorithm != currentAlgorithm) {
-            log.info("Switch load balancing algorithm: {} -> {}", currentAlgorithm, newAlgorithm);
-            activeStrategy.onDeactivate();
-            activeStrategy = strategyCache.computeIfAbsent(newAlgorithm, this::createStrategy);
-            currentAlgorithm = newAlgorithm;
-            activeStrategy.onActivate(settings.copy());
+
+        StrategyRuntime current = activeRuntime;
+        if (current == null) {
+            StrategyRuntime created = createRuntime(newAlgorithm, settings.copy());
+            created.state = RuntimeState.ACTIVE;
+            created.strategy.onActivate(settings.copy());
+            activeRuntime = created;
+            runtimes.add(created);
             refreshInstances();
+            return;
+        }
+
+        if (newAlgorithm != current.algorithm) {
+            log.info("Smooth switch load balancing algorithm: {} -> {}", current.algorithm, newAlgorithm);
+            current.state = RuntimeState.DRAINING;
+            StrategyRuntime next = createRuntime(newAlgorithm, settings.copy());
+            next.state = RuntimeState.ACTIVE;
+            next.strategy.onActivate(settings.copy());
+            activeRuntime = next;
+            runtimes.add(next);
+            refreshInstances();
+            cleanupDrainingRuntimes();
         } else {
-            activeStrategy.onSettingsChanged(settings.copy());
+            current.settings = settings.copy();
+            current.strategy.onSettingsChanged(settings.copy());
         }
     }
 
     public LoadBalancingSettings getSettings() {
         LoadBalancingSettings copy = settings.copy();
-        copy.setAlgorithm(currentAlgorithm);
+        StrategyRuntime runtime = activeRuntime;
+        copy.setAlgorithm(runtime == null ? LoadBalancingAlgorithm.TRADITIONAL : runtime.algorithm);
         return copy;
     }
 
@@ -71,11 +97,48 @@ public class LoadBalancer {
         if (instances == null) {
             instances = List.of();
         }
-        activeStrategy.refreshInstances(instances, settings.copy());
+        StrategyRuntime runtime = activeRuntime;
+        if (runtime != null) {
+            runtime.strategy.refreshInstances(instances, settings.copy());
+        }
+    }
+
+    public InstanceLease acquireLease(int estimatedTokens) {
+        StrategyRuntime runtime = activeRuntime;
+        if (runtime == null || runtime.state != RuntimeState.ACTIVE) {
+            return null;
+        }
+        int tokens = Math.max(1, estimatedTokens);
+        RequestBucket bucket = resolveBucket(tokens);
+        maybeUpdateDynamicBoundaries(tokens);
+        ModelInstance instance = runtime.strategy.acquire(tokens, bucket);
+        if (instance == null) {
+            return null;
+        }
+        String leaseId = "lease-" + leaseSeq.incrementAndGet() + "-" + System.nanoTime();
+        runtime.inflightLeases.incrementAndGet();
+        runtime.inflightByBucket.get(bucket).incrementAndGet();
+        activeLeases.put(leaseId, new LeaseContext(runtime, instance, bucket));
+        return new InstanceLease(leaseId, instance, tokens, bucket.name());
+    }
+
+    public void releaseLease(String leaseId) {
+        if (leaseId == null || leaseId.isBlank()) {
+            return;
+        }
+        LeaseContext context = activeLeases.remove(leaseId);
+        if (context == null) {
+            return;
+        }
+        context.runtime.strategy.release(context.instance);
+        context.runtime.inflightLeases.decrementAndGet();
+        context.runtime.inflightByBucket.get(context.bucket).decrementAndGet();
+        cleanupDrainingRuntimes();
     }
 
     public ModelInstance getNextAvailableInstance(int estimatedTokens) {
-        return activeStrategy.acquire(Math.max(1, estimatedTokens));
+        InstanceLease lease = acquireLease(estimatedTokens);
+        return lease == null ? null : lease.getInstance();
     }
 
     public ModelInstance getNextAvailableInstance() {
@@ -83,24 +146,118 @@ public class LoadBalancer {
     }
 
     public void releaseInstance(ModelInstance instance) {
-        activeStrategy.release(instance);
+        if (instance == null) {
+            return;
+        }
+        Long id = instance.getId();
+        StrategyRuntime runtime = activeRuntime;
+        if (runtime != null && runtime.strategy.releaseById(id)) {
+            return;
+        }
+        for (StrategyRuntime dr : runtimes) {
+            if (dr != runtime && dr.state == RuntimeState.DRAINING && dr.strategy.releaseById(id)) {
+                return;
+            }
+        }
     }
 
     public List<ModelInstance> getInstanceList() {
-        return activeStrategy.getInstances();
+        StrategyRuntime runtime = activeRuntime;
+        return runtime == null ? List.of() : runtime.strategy.getInstances();
     }
 
     public QueueStats getStats() {
-        QueueStats stats = activeStrategy.getStats();
-        stats.setAlgorithm(currentAlgorithm.name());
+        StrategyRuntime runtime = activeRuntime;
+        if (runtime == null) {
+            QueueStats empty = new QueueStats(0, 0, 0, 0, System.currentTimeMillis());
+            empty.setAlgorithm(LoadBalancingAlgorithm.TRADITIONAL.name());
+            return empty;
+        }
+        QueueStats stats = runtime.strategy.getStats();
+        stats.setAlgorithm(runtime.algorithm.name());
         return stats;
     }
 
-    private LoadBalancingStrategy createStrategy(LoadBalancingAlgorithm algorithm) {
-        return switch (algorithm) {
+    public List<StrategyStatusDto> getStrategyStatuses() {
+        List<StrategyStatusDto> result = new ArrayList<>();
+        for (StrategyRuntime runtime : runtimes) {
+            StrategyStatusDto dto = new StrategyStatusDto();
+            dto.setRuntimeId(runtime.runtimeId);
+            dto.setAlgorithm(runtime.algorithm.name());
+            dto.setState(runtime.state.name());
+            dto.setInflightLeases(runtime.inflightLeases.get());
+            dto.setSinceEpochMs(runtime.activatedAtMs);
+            dto.setShortBoundaryTokens(shortBoundaryTokens);
+            dto.setMediumBoundaryTokens(mediumBoundaryTokens);
+            dto.setShortWeight(settings.getShortBucketWeight());
+            dto.setMediumWeight(settings.getMediumBucketWeight());
+            dto.setLongWeight(settings.getLongBucketWeight());
+            result.add(dto);
+        }
+        return result;
+    }
+
+    private void cleanupDrainingRuntimes() {
+        for (StrategyRuntime runtime : new ArrayList<>(runtimes)) {
+            if (runtime.state != RuntimeState.DRAINING) {
+                continue;
+            }
+            if (runtime.inflightLeases.get() > 0) {
+                continue;
+            }
+            runtime.strategy.onDeactivate();
+            runtime.state = RuntimeState.RETIRED;
+            runtimes.remove(runtime);
+        }
+    }
+
+    private StrategyRuntime createRuntime(LoadBalancingAlgorithm algorithm, LoadBalancingSettings runtimeSettings) {
+        LoadBalancingStrategy strategy = switch (algorithm) {
             case OBJECT_POOL -> new ObjectPoolStrategy();
             case TRADITIONAL -> new TraditionalStrategy();
         };
+        return new StrategyRuntime(
+                "rt-" + runtimeSeq.incrementAndGet(),
+                algorithm,
+                runtimeSettings.copy(),
+                strategy
+        );
+    }
+
+    private RequestBucket resolveBucket(int estimatedTokens) {
+        if (estimatedTokens <= shortBoundaryTokens) {
+            return RequestBucket.SHORT;
+        }
+        if (estimatedTokens <= mediumBoundaryTokens) {
+            return RequestBucket.MEDIUM;
+        }
+        return RequestBucket.LONG;
+    }
+
+    private void maybeUpdateDynamicBoundaries(int estimatedTokens) {
+        synchronized (histogramLock) {
+            tokenHistogram.addLast(Math.max(1, estimatedTokens));
+            while (tokenHistogram.size() > settings.getHistogramSampleSize()) {
+                tokenHistogram.removeFirst();
+            }
+            if (!settings.isDynamicBucketingEnabled()) {
+                return;
+            }
+            long now = System.currentTimeMillis();
+            if (now - lastBoundaryUpdateMs < settings.getBucketUpdateIntervalSeconds() * 1000L) {
+                return;
+            }
+            lastBoundaryUpdateMs = now;
+            if (tokenHistogram.size() < 32) {
+                return;
+            }
+            List<Integer> sorted = new ArrayList<>(tokenHistogram);
+            sorted.sort(Integer::compareTo);
+            int p40 = sorted.get((int) Math.floor((sorted.size() - 1) * 0.40d));
+            int p80 = sorted.get((int) Math.floor((sorted.size() - 1) * 0.80d));
+            shortBoundaryTokens = Math.max(64, p40);
+            mediumBoundaryTokens = Math.max(shortBoundaryTokens + 64, p80);
+        }
     }
 
     private interface LoadBalancingStrategy {
@@ -108,15 +265,16 @@ public class LoadBalancer {
         void onDeactivate();
         void onSettingsChanged(LoadBalancingSettings settings);
         void refreshInstances(List<ModelInstance> instances, LoadBalancingSettings settings);
-        ModelInstance acquire(int estimatedTokens);
+        ModelInstance acquire(int estimatedTokens, RequestBucket bucket);
         void release(ModelInstance instance);
+        boolean releaseById(Long instanceId);
         List<ModelInstance> getInstances();
         QueueStats getStats();
     }
 
     private abstract static class BaseTokenStrategy implements LoadBalancingStrategy {
         protected final CopyOnWriteArrayList<InstanceWrapper> wrappers = new CopyOnWriteArrayList<>();
-        protected final Map<String, InstanceWrapper> wrapperMap = new ConcurrentHashMap<>();
+        protected final Map<Long, InstanceWrapper> wrapperMap = new ConcurrentHashMap<>();
         protected volatile LoadBalancingSettings settings = LoadBalancingSettings.defaultSettings();
 
         @Override
@@ -143,7 +301,9 @@ public class LoadBalancer {
             for (ModelInstance instance : instances) {
                 InstanceWrapper wrapper = createWrapper(instance, this.settings);
                 wrappers.add(wrapper);
-                wrapperMap.put(instance.getUrl(), wrapper);
+                if (instance.getId() != null) {
+                    wrapperMap.put(instance.getId(), wrapper);
+                }
             }
         }
 
@@ -186,11 +346,24 @@ public class LoadBalancer {
             int availableTpm = wrappers.stream().filter(InstanceWrapper::isHealthy).mapToInt(InstanceWrapper::availableTpm).sum();
             return new QueueStats(total, healthy, availableRpm, availableTpm, System.currentTimeMillis());
         }
+
+        @Override
+        public boolean releaseById(Long instanceId) {
+            if (instanceId == null) {
+                return false;
+            }
+            InstanceWrapper wrapper = wrapperMap.get(instanceId);
+            if (wrapper == null) {
+                return false;
+            }
+            wrapper.release();
+            return true;
+        }
     }
 
     private static class TraditionalStrategy extends BaseTokenStrategy {
         @Override
-        public ModelInstance acquire(int estimatedTokens) {
+        public ModelInstance acquire(int estimatedTokens, RequestBucket bucket) {
             List<InstanceWrapper> samples = sampleWrappers();
             if (samples.isEmpty()) {
                 return null;
@@ -209,7 +382,7 @@ public class LoadBalancer {
             if (instance == null) {
                 return;
             }
-            InstanceWrapper wrapper = wrapperMap.get(instance.getUrl());
+            InstanceWrapper wrapper = wrapperMap.get(instance.getId());
             if (wrapper != null) {
                 wrapper.release();
             }
@@ -219,22 +392,18 @@ public class LoadBalancer {
     private static class ObjectPoolStrategy extends BaseTokenStrategy {
         @Override
         protected InstanceWrapper createWrapper(ModelInstance instance, LoadBalancingSettings settings) {
-            return new InstanceWrapper(instance, settings.getObjectPoolCoreSize(), settings.getObjectPoolMaxSize());
-        }
-
-        @Override
-        public void onActivate(LoadBalancingSettings settings) {
-            super.onActivate(settings);
-            for (InstanceWrapper wrapper : wrappers) {
-                wrapper.reconfigurePool(settings.getObjectPoolCoreSize(), settings.getObjectPoolMaxSize());
-            }
+            InstanceWrapper wrapper = new InstanceWrapper(instance);
+            wrapper.applyBucketWeights(settings.getShortBucketWeight(),
+                    settings.getMediumBucketWeight(), settings.getLongBucketWeight());
+            return wrapper;
         }
 
         @Override
         public void onSettingsChanged(LoadBalancingSettings settings) {
             super.onSettingsChanged(settings);
             for (InstanceWrapper wrapper : wrappers) {
-                wrapper.reconfigurePool(settings.getObjectPoolCoreSize(), settings.getObjectPoolMaxSize());
+                wrapper.applyBucketWeights(settings.getShortBucketWeight(),
+                        settings.getMediumBucketWeight(), settings.getLongBucketWeight());
             }
         }
 
@@ -247,14 +416,25 @@ public class LoadBalancer {
         }
 
         @Override
-        public ModelInstance acquire(int estimatedTokens) {
+        public ModelInstance acquire(int estimatedTokens, RequestBucket bucket) {
             List<InstanceWrapper> samples = sampleWrappers();
             if (samples.isEmpty()) {
                 return null;
             }
-            samples.sort(Comparator.comparingDouble(wrapper -> wrapper.poolScore(estimatedTokens)));
-            for (InstanceWrapper wrapper : samples) {
-                if (wrapper.tryAcquireFromPool(estimatedTokens)) {
+            List<InstanceWrapper> shuffled = new ArrayList<>(samples);
+            for (int i = shuffled.size() - 1; i > 0; i--) {
+                int j = ThreadLocalRandom.current().nextInt(i + 1);
+                InstanceWrapper tmp = shuffled.get(i);
+                shuffled.set(i, shuffled.get(j));
+                shuffled.set(j, tmp);
+            }
+            for (InstanceWrapper wrapper : shuffled) {
+                if (wrapper.tryAcquireFromPool(estimatedTokens, true)) {
+                    return wrapper.instance();
+                }
+            }
+            for (InstanceWrapper wrapper : shuffled) {
+                if (wrapper.tryAcquireFromPool(estimatedTokens, false)) {
                     return wrapper.instance();
                 }
             }
@@ -266,7 +446,7 @@ public class LoadBalancer {
             if (instance == null) {
                 return;
             }
-            InstanceWrapper wrapper = wrapperMap.get(instance.getUrl());
+            InstanceWrapper wrapper = wrapperMap.get(instance.getId());
             if (wrapper != null) {
                 wrapper.releaseToPool();
             }
@@ -280,8 +460,7 @@ public class LoadBalancer {
         private double rpmTokens;
         private double tpmTokens;
         private long lastRefillNanos = System.nanoTime();
-        private int poolCoreSize;
-        private int poolMaxSize;
+        private int dynamicPoolCap;
         private int poolAllocatedSize;
         private int poolActiveSize;
         private int poolIdleSize;
@@ -290,25 +469,9 @@ public class LoadBalancer {
             this.instance = instance;
             this.rpmTokens = instance.getEffectiveRpmLimit();
             this.tpmTokens = instance.getEffectiveTpmLimit();
-        }
-
-        InstanceWrapper(ModelInstance instance, int core, int max) {
-            this(instance);
-            reconfigurePool(core, max);
-        }
-
-        void reconfigurePool(int core, int max) {
-            synchronized (tokenLock) {
-                this.poolCoreSize = Math.max(1, core);
-                this.poolMaxSize = Math.max(this.poolCoreSize, max);
-                if (poolAllocatedSize < poolCoreSize) {
-                    poolAllocatedSize = poolCoreSize;
-                }
-                if (poolAllocatedSize > poolMaxSize) {
-                    poolAllocatedSize = Math.max(poolMaxSize, poolActiveSize);
-                }
-                poolIdleSize = Math.max(0, poolAllocatedSize - poolActiveSize);
-            }
+            this.dynamicPoolCap = basePoolCap(instance.getEffectiveRpmLimit(), instance.getEffectiveTpmLimit());
+            this.poolAllocatedSize = Math.max(1, dynamicPoolCap / 2);
+            this.poolIdleSize = poolAllocatedSize;
         }
 
         void destroyPool() {
@@ -335,7 +498,7 @@ public class LoadBalancer {
             }
         }
 
-        boolean tryAcquireFromPool(int estimatedTokens) {
+        boolean tryAcquireFromPool(int estimatedTokens, boolean idleOnly) {
             synchronized (tokenLock) {
                 if (!isHealthy()) {
                     return false;
@@ -347,7 +510,7 @@ public class LoadBalancer {
                 if (poolIdleSize > 0) {
                     poolIdleSize--;
                     poolActiveSize++;
-                } else if (poolAllocatedSize < poolMaxSize) {
+                } else if (!idleOnly && poolAllocatedSize < dynamicPoolCap) {
                     poolAllocatedSize++;
                     poolActiveSize++;
                 } else {
@@ -399,7 +562,7 @@ public class LoadBalancer {
                 if (!canAcquireWithBudgetAndConcurrency(estimatedTokens)) {
                     return Double.MAX_VALUE;
                 }
-                boolean poolCanGrow = poolIdleSize > 0 || poolAllocatedSize < poolMaxSize;
+                boolean poolCanGrow = poolIdleSize > 0 || poolAllocatedSize < dynamicPoolCap;
                 if (!poolCanGrow) {
                     return Double.MAX_VALUE;
                 }
@@ -464,6 +627,27 @@ public class LoadBalancer {
             }
         }
 
+        void applyBucketWeights(int shortWeight, int mediumWeight, int longWeight) {
+            synchronized (tokenLock) {
+                int totalWeight = Math.max(1, shortWeight + mediumWeight + longWeight);
+                int weightedCap = Math.max(4, (instance.getEffectiveRpmLimit() / 60) * totalWeight / 100);
+                this.dynamicPoolCap = Math.max(4, Math.min(64, weightedCap));
+                if (poolAllocatedSize > dynamicPoolCap) {
+                    poolAllocatedSize = Math.max(poolActiveSize, dynamicPoolCap);
+                }
+                if (poolAllocatedSize <= 0) {
+                    poolAllocatedSize = Math.max(1, dynamicPoolCap / 2);
+                }
+                poolIdleSize = Math.max(0, poolAllocatedSize - poolActiveSize);
+            }
+        }
+
+        private int basePoolCap(int rpmLimit, int tpmLimit) {
+            int rpmBase = Math.max(4, rpmLimit / 1000);
+            int tpmBase = Math.max(4, tpmLimit / 200000);
+            return Math.max(4, Math.min(64, Math.max(rpmBase, tpmBase)));
+        }
+
         ModelInstance instance() {
             return instance;
         }
@@ -494,4 +678,61 @@ public class LoadBalancer {
         public String getAlgorithm() { return algorithm; }
         public void setAlgorithm(String algorithm) { this.algorithm = algorithm; }
     }
+
+    public static class InstanceLease {
+        private final String leaseId;
+        private final ModelInstance instance;
+        private final int estimatedTokens;
+        private final String bucket;
+
+        public InstanceLease(String leaseId, ModelInstance instance, int estimatedTokens, String bucket) {
+            this.leaseId = leaseId;
+            this.instance = instance;
+            this.estimatedTokens = estimatedTokens;
+            this.bucket = bucket;
+        }
+
+        public String getLeaseId() { return leaseId; }
+        public ModelInstance getInstance() { return instance; }
+        public int getEstimatedTokens() { return estimatedTokens; }
+        public String getBucket() { return bucket; }
+    }
+
+    private enum RequestBucket {
+        SHORT,
+        MEDIUM,
+        LONG
+    }
+
+    private enum RuntimeState {
+        ACTIVE,
+        DRAINING,
+        RETIRED
+    }
+
+    private static class StrategyRuntime {
+        private final String runtimeId;
+        private final LoadBalancingAlgorithm algorithm;
+        private volatile LoadBalancingSettings settings;
+        private final LoadBalancingStrategy strategy;
+        private volatile RuntimeState state;
+        private final long activatedAtMs;
+        private final AtomicInteger inflightLeases = new AtomicInteger(0);
+        private final EnumMap<RequestBucket, AtomicInteger> inflightByBucket = new EnumMap<>(RequestBucket.class);
+
+        StrategyRuntime(String runtimeId, LoadBalancingAlgorithm algorithm, LoadBalancingSettings settings,
+                        LoadBalancingStrategy strategy) {
+            this.runtimeId = runtimeId;
+            this.algorithm = algorithm;
+            this.settings = settings;
+            this.strategy = strategy;
+            this.state = RuntimeState.ACTIVE;
+            this.activatedAtMs = System.currentTimeMillis();
+            for (RequestBucket bucket : RequestBucket.values()) {
+                inflightByBucket.put(bucket, new AtomicInteger(0));
+            }
+        }
+    }
+
+    private record LeaseContext(StrategyRuntime runtime, ModelInstance instance, RequestBucket bucket) {}
 }

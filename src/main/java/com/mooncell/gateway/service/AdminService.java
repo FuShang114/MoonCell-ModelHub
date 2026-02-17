@@ -12,6 +12,7 @@ import com.mooncell.gateway.dto.InstanceStatsDto;
 import com.mooncell.gateway.dto.LoadBalancingSettingsDto;
 import com.mooncell.gateway.dto.ProviderDto;
 import com.mooncell.gateway.dto.ProviderRequest;
+import com.mooncell.gateway.dto.StrategyStatusDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -157,8 +158,12 @@ public class AdminService {
         LoadBalancingSettingsDto dto = new LoadBalancingSettingsDto();
         dto.setAlgorithm(settings.getAlgorithm().name());
         dto.setSampleCount(settings.getSampleCount());
-        dto.setObjectPoolCoreSize(settings.getObjectPoolCoreSize());
-        dto.setObjectPoolMaxSize(settings.getObjectPoolMaxSize());
+        dto.setDynamicBucketingEnabled(settings.isDynamicBucketingEnabled());
+        dto.setHistogramSampleSize(settings.getHistogramSampleSize());
+        dto.setBucketUpdateIntervalSeconds(settings.getBucketUpdateIntervalSeconds());
+        dto.setShortBucketWeight(settings.getShortBucketWeight());
+        dto.setMediumBucketWeight(settings.getMediumBucketWeight());
+        dto.setLongBucketWeight(settings.getLongBucketWeight());
         return dto;
     }
 
@@ -171,14 +176,30 @@ public class AdminService {
         if (request.getSampleCount() != null) {
             updated.setSampleCount(request.getSampleCount());
         }
-        if (request.getObjectPoolCoreSize() != null) {
-            updated.setObjectPoolCoreSize(request.getObjectPoolCoreSize());
+        if (request.getDynamicBucketingEnabled() != null) {
+            updated.setDynamicBucketingEnabled(request.getDynamicBucketingEnabled());
         }
-        if (request.getObjectPoolMaxSize() != null) {
-            updated.setObjectPoolMaxSize(request.getObjectPoolMaxSize());
+        if (request.getHistogramSampleSize() != null) {
+            updated.setHistogramSampleSize(request.getHistogramSampleSize());
+        }
+        if (request.getBucketUpdateIntervalSeconds() != null) {
+            updated.setBucketUpdateIntervalSeconds(request.getBucketUpdateIntervalSeconds());
+        }
+        if (request.getShortBucketWeight() != null) {
+            updated.setShortBucketWeight(request.getShortBucketWeight());
+        }
+        if (request.getMediumBucketWeight() != null) {
+            updated.setMediumBucketWeight(request.getMediumBucketWeight());
+        }
+        if (request.getLongBucketWeight() != null) {
+            updated.setLongBucketWeight(request.getLongBucketWeight());
         }
         loadBalancer.updateSettings(updated);
         return getLoadBalancingSettings();
+    }
+
+    public List<StrategyStatusDto> getStrategyStatuses() {
+        return loadBalancer.getStrategyStatuses();
     }
 
     public String addProvider(ProviderRequest request) {

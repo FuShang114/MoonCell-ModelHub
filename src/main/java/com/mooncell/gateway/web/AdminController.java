@@ -7,6 +7,7 @@ import com.mooncell.gateway.dto.AddInstanceRequest;
 import com.mooncell.gateway.dto.LoadBalancingSettingsDto;
 import com.mooncell.gateway.dto.ProviderDto;
 import com.mooncell.gateway.dto.ProviderRequest;
+import com.mooncell.gateway.dto.StrategyStatusDto;
 import com.mooncell.gateway.dto.UpdatePostModelRequest;
 import com.mooncell.gateway.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -153,5 +154,11 @@ public class AdminController {
     @PutMapping("/load-balancing/settings")
     public LoadBalancingSettingsDto updateLoadBalancingSettings(@RequestBody LoadBalancingSettingsDto request) {
         return adminService.updateLoadBalancingSettings(request);
+    }
+
+    @Operation(summary = "获取策略运行状态", description = "获取当前激活和排空中的策略状态列表")
+    @GetMapping("/load-balancing/strategy-statuses")
+    public List<StrategyStatusDto> getStrategyStatuses() {
+        return adminService.getStrategyStatuses();
     }
 }

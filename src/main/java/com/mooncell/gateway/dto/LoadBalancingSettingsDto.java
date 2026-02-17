@@ -3,8 +3,12 @@ package com.mooncell.gateway.dto;
 public class LoadBalancingSettingsDto {
     private String algorithm;
     private Integer sampleCount;
-    private Integer objectPoolCoreSize;
-    private Integer objectPoolMaxSize;
+    private Boolean dynamicBucketingEnabled;
+    private Integer histogramSampleSize;
+    private Integer bucketUpdateIntervalSeconds;
+    private Integer shortBucketWeight;
+    private Integer mediumBucketWeight;
+    private Integer longBucketWeight;
 
     public String getAlgorithm() {
         return algorithm;
@@ -22,19 +26,51 @@ public class LoadBalancingSettingsDto {
         this.sampleCount = sampleCount;
     }
 
-    public Integer getObjectPoolCoreSize() {
-        return objectPoolCoreSize;
+    public Boolean getDynamicBucketingEnabled() {
+        return dynamicBucketingEnabled;
     }
 
-    public void setObjectPoolCoreSize(Integer objectPoolCoreSize) {
-        this.objectPoolCoreSize = objectPoolCoreSize;
+    public void setDynamicBucketingEnabled(Boolean dynamicBucketingEnabled) {
+        this.dynamicBucketingEnabled = dynamicBucketingEnabled;
     }
 
-    public Integer getObjectPoolMaxSize() {
-        return objectPoolMaxSize;
+    public Integer getHistogramSampleSize() {
+        return histogramSampleSize;
     }
 
-    public void setObjectPoolMaxSize(Integer objectPoolMaxSize) {
-        this.objectPoolMaxSize = objectPoolMaxSize;
+    public void setHistogramSampleSize(Integer histogramSampleSize) {
+        this.histogramSampleSize = histogramSampleSize;
+    }
+
+    public Integer getBucketUpdateIntervalSeconds() {
+        return bucketUpdateIntervalSeconds;
+    }
+
+    public void setBucketUpdateIntervalSeconds(Integer bucketUpdateIntervalSeconds) {
+        this.bucketUpdateIntervalSeconds = bucketUpdateIntervalSeconds;
+    }
+
+    public Integer getShortBucketWeight() {
+        return shortBucketWeight;
+    }
+
+    public void setShortBucketWeight(Integer shortBucketWeight) {
+        this.shortBucketWeight = shortBucketWeight;
+    }
+
+    public Integer getMediumBucketWeight() {
+        return mediumBucketWeight;
+    }
+
+    public void setMediumBucketWeight(Integer mediumBucketWeight) {
+        this.mediumBucketWeight = mediumBucketWeight;
+    }
+
+    public Integer getLongBucketWeight() {
+        return longBucketWeight;
+    }
+
+    public void setLongBucketWeight(Integer longBucketWeight) {
+        this.longBucketWeight = longBucketWeight;
     }
 }
