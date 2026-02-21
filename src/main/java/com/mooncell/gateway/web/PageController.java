@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class PageController {
 
     /**
-     * 健康节点监控页面
+     * 配置页面
+     * @param model 模型对象
+     * @return 配置页面模板名称
      */
     @GetMapping("/config")
     public String configPage(Model model) {
@@ -21,12 +23,19 @@ public class PageController {
 
     /**
      * 调试页面
+     * @param model 模型对象
+     * @return 调试页面模板名称
      */
     @GetMapping("/admin/debug")
     public String debugPage(Model model) {
         return "debug";
     }
 
+    /**
+     * 设置页面
+     * @param model 模型对象
+     * @return 设置页面模板名称
+     */
     @GetMapping("/settings")
     public String settingsPage(Model model) {
         return "settings";

@@ -7,9 +7,17 @@ import io.swagger.v3.oas.models.info.License;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Swagger配置类
+ * 配置API文档生成
+ */
 @Configuration
 public class SwaggerConfig {
 
+    /**
+     * 配置OpenAPI文档信息
+     * @return OpenAPI配置对象
+     */
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()

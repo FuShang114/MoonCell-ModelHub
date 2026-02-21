@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ModelInstance {
+    public static final int FIXED_HOLD_TIMEOUT_SECONDS = 60;
     private Long id;
     private Long providerId;
     private String providerName; // 冗余字段，方便使用
@@ -37,6 +39,8 @@ public class ModelInstance {
     private Integer weight;   // 权重
     private Integer rpmLimit; // 每分钟请求上限
     private Integer tpmLimit; // 每分钟Token上限
+    /** 资源池键，用于路由器按池回退；空或 null 时归入 default 池 */
+    private String poolKey;
     // 兼容历史字段，逐步废弃
     private Integer maxQps;
     private Boolean isActive; // 数据库中的配置状态
@@ -62,7 +66,36 @@ public class ModelInstance {
     @Builder.Default
     private transient long lastHeartbeat = 0;
 
+    // 对象池运行态：0 空闲，1 占用（仅对象池使用，Traditional 忽略）
+    @Builder.Default
+    private transient AtomicInteger occupiedState = new AtomicInteger(0);
+    // 占用超时释放阈值（秒），前端可见只读
+    @Builder.Default
+    private transient int holdTimeoutSeconds = FIXED_HOLD_TIMEOUT_SECONDS;
+    @Builder.Default
+    private transient long occupiedAtMs = 0L;
+    @Builder.Default
+    private transient long occupiedExpireAtMs = 0L;
+    @Builder.Default
+    private transient Long parentInstanceId = null;
+
+    public void ensureRuntimeState() {
+        if (failureCount == null) {
+            failureCount = new AtomicInteger(0);
+        }
+        if (requestCount == null) {
+            requestCount = new AtomicInteger(0);
+        }
+        if (totalLatency == null) {
+            totalLatency = new AtomicLong(0);
+        }
+        if (occupiedState == null) {
+            occupiedState = new AtomicInteger(0);
+        }
+    }
+
     public void recordSuccess(long latency) {
+        ensureRuntimeState();
         this.circuitOpen = false;
         this.failureCount.set(0);
         this.requestCount.incrementAndGet();
@@ -72,6 +105,7 @@ public class ModelInstance {
     }
 
     public void recordFailure() {
+        ensureRuntimeState();
         int failures = this.failureCount.incrementAndGet();
         this.lastFailureTime = System.currentTimeMillis();
         if (failures >= 3) {
@@ -80,6 +114,7 @@ public class ModelInstance {
     }
     
     public void updateHeartbeat() {
+        ensureRuntimeState();
         this.lastHeartbeat = System.currentTimeMillis();
     }
     
@@ -107,6 +142,60 @@ public class ModelInstance {
             return tpmLimit;
         }
         return 600000;
+    }
+
+    public boolean tryOccupy(long nowMs, int timeoutSeconds) {
+        ensureRuntimeState();
+        if (occupiedState.compareAndSet(0, 1)) {
+            // T 写死 60 秒：忽略调用方传入 timeoutSeconds，保证全局一致
+            this.holdTimeoutSeconds = FIXED_HOLD_TIMEOUT_SECONDS;
+            this.occupiedAtMs = nowMs;
+            this.occupiedExpireAtMs = nowMs + (long) this.holdTimeoutSeconds * 1000L;
+            return true;
+        }
+        return false;
+    }
+
+    public void forceRelease() {
+        ensureRuntimeState();
+        occupiedState.set(0);
+        occupiedAtMs = 0L;
+        occupiedExpireAtMs = 0L;
+    }
+
+    public boolean isOccupied() {
+        ensureRuntimeState();
+        return occupiedState.get() == 1;
+    }
+
+    public boolean isExpired(long nowMs) {
+        return isOccupied() && occupiedExpireAtMs > 0 && nowMs >= occupiedExpireAtMs;
+    }
+
+    public ModelInstance deepCopyForPool(long objectId, int timeoutSeconds) {
+        ModelInstance copy = ModelInstance.builder()
+                .id(objectId)
+                .providerId(this.providerId)
+                .providerName(this.providerName)
+                .modelName(this.modelName)
+                .url(this.url)
+                .apiKey(this.apiKey)
+                .postModel(this.postModel)
+                .responseRequestIdPath(this.responseRequestIdPath)
+                .responseContentPath(this.responseContentPath)
+                .responseSeqPath(this.responseSeqPath)
+                .responseRawEnabled(this.responseRawEnabled)
+                .weight(this.weight)
+                .rpmLimit(this.rpmLimit)
+                .tpmLimit(this.tpmLimit)
+                .maxQps(this.maxQps)
+                .isActive(this.isActive)
+                .build();
+        copy.parentInstanceId = Objects.requireNonNullElse(this.id, objectId);
+        // T 写死 60 秒：忽略调用方传入 timeoutSeconds，保证全局一致
+        copy.holdTimeoutSeconds = FIXED_HOLD_TIMEOUT_SECONDS;
+        copy.forceRelease();
+        return copy;
     }
 
 }

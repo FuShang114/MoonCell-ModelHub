@@ -1,8 +1,7 @@
 package com.mooncell.gateway.core.balancer;
 
 public enum LoadBalancingAlgorithm {
-    TRADITIONAL,
-    OBJECT_POOL;
+    TRADITIONAL;
 
     public static LoadBalancingAlgorithm fromString(String value) {
         if (value == null || value.isBlank()) {

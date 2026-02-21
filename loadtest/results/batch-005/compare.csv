@@ -1,0 +1,3 @@
+algo,data_distribution,target_rps,duration_sec,actual_rps,error_rate,latency_p95_ms,gc_per_min_avg,cpu_usage_avg,qps_avg,success_rate_avg,failure_rate_avg,throughput_avg,resource_usage_avg,reject_queue_full,reject_budget,reject_sampling
+TRADITIONAL,homogeneous,4,300,0.13,0.5250,30016.00,6.61,0.0151,0.04,0.8000,0.0000,2.46,0.0000,0,0,0
+TRADITIONAL,homogeneous,8,300,0.27,0.5250,30016.00,8.78,0.0248,0.08,0.8250,0.0000,7.80,0.0000,0,0,0

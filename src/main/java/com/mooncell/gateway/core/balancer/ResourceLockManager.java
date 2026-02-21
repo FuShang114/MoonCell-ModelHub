@@ -37,14 +37,12 @@ public class ResourceLockManager {
      * 释放资源
      */
     public void release(ModelInstance instance) {
-        if (instance == null) return;
+        if (instance == null) {
+            return;
+        }
         Semaphore semaphore = locks.get(instance.getUrl());
         if (semaphore != null) {
             semaphore.release();
         }
     }
 }
-
-
-
-

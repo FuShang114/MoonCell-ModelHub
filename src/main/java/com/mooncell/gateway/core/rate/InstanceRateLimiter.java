@@ -1,5 +1,6 @@
 package com.mooncell.gateway.core.rate;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -106,23 +107,15 @@ public class InstanceRateLimiter {
     /**
      * QPS状态信息
      */
+    @Data
     public static class QpsStatus {
         private final int maxQps;
         private final int currentRequests;
         private final int requestsInLastSecond;
         private final long windowStartTime;
-        
-        public QpsStatus(int maxQps, int currentRequests, int requestsInLastSecond, long windowStartTime) {
-            this.maxQps = maxQps;
-            this.currentRequests = currentRequests;
-            this.requestsInLastSecond = requestsInLastSecond;
-            this.windowStartTime = windowStartTime;
+
+        public double getUsageRate() {
+            return (double) requestsInLastSecond / maxQps;
         }
-        
-        public int getMaxQps() { return maxQps; }
-        public int getCurrentRequests() { return currentRequests; }
-        public int getRequestsInLastSecond() { return requestsInLastSecond; }
-        public long getWindowStartTime() { return windowStartTime; }
-        public double getUsageRate() { return (double) requestsInLastSecond / maxQps; }
     }
 }

@@ -1,0 +1,9 @@
+{
+  "totalRequests" : 1,
+  "successRequests" : 0,
+  "failedRequests" : 1,
+  "throughputTokens" : 0,
+  "failureReasonTotals" : {
+    "CLIENT_CANCELLED" : 1
+  }
+}

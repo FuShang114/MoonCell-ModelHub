@@ -1,0 +1,11 @@
+{
+  "batchName": "batch-5min-compare-5m",
+  "runId": "2026-02-19T11-03-59-614Z",
+  "startedAt": "2026-02-19T11:03:59.619Z",
+  "baseUrl": "http://127.0.0.1:9061",
+  "rpsLevels": [
+    6
+  ],
+  "durationSec": 300,
+  "prompt": "请用三点说明系统稳定性优化建议，每点不超过18字。"
+}

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>压测对比报告 - TRADITIONAL vs OBJECT_POOL</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 20px; }
+    h1 { font-size: 1.5rem; margin: 0 0 8px 0; font-weight: 600; }
+    .meta { color: #94a3b8; font-size: 0.8rem; margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 14px; }
+    .title { font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px; font-weight: 500; }
+    .box { height: 220px; }
+    .summary { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 14px; margin-bottom: 16px; overflow-x: auto; }
+    .summary table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .summary th, .summary td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #334155; }
+    .summary th { color: #94a3b8; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <h1>TRADITIONAL vs OBJECT_POOL 压测对比</h1>
+  <div class="meta">横轴 = 目标 RPS · 蓝色 = TRADITIONAL · 紫色 = OBJECT_POOL · 数据来源: batch-3min-final/compare.csv · 生成时间: 2026/2/19 17:33:23</div>
+  <div class="summary">
+    <table>
+      <thead><tr><th>算法</th><th>目标 RPS</th><th>实际 RPS</th><th>错误率</th><th>P95 时延(ms)</th><th>成功率</th><th>吞吐</th><th>拒绝(队/预算/Sample)</th></tr></thead>
+      <tbody>
+        <tr><td>TRADITIONAL</td><td>3</td><td>0.46</td><td>4.76%</td><td>7907</td><td>96.4%</td><td>89.62</td><td>0 / 0 / 37</td></tr><tr><td>TRADITIONAL</td><td>6</td><td>0.86</td><td>20.51%</td><td>6941</td><td>88.1%</td><td>72.83</td><td>0 / 0 / 94</td></tr><tr><td>TRADITIONAL</td><td>9</td><td>1.35</td><td>22.22%</td><td>6862</td><td>75.0%</td><td>120.57</td><td>0 / 0 / 181</td></tr><tr><td>OBJECT_POOL</td><td>3</td><td>0.54</td><td>25.25%</td><td>6301</td><td>48.9%</td><td>44.20</td><td>0 / 0 / 276</td></tr><tr><td>OBJECT_POOL</td><td>6</td><td>0.93</td><td>50.00%</td><td>6110</td><td>53.3%</td><td>35.90</td><td>0 / 0 / 84</td></tr><tr><td>OBJECT_POOL</td><td>9</td><td>1.43</td><td>66.67%</td><td>6129</td><td>39.5%</td><td>35.57</td><td>0 / 0 / 174</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="title">错误率</div><div class="box"><canvas id="c1"></canvas></div></div>
+    <div class="card"><div class="title">P95 时延 (ms)</div><div class="box"><canvas id="c2"></canvas></div></div>
+    <div class="card"><div class="title">实际 RPS</div><div class="box"><canvas id="c3"></canvas></div></div>
+    <div class="card"><div class="title">GC 频率 (次/分钟)</div><div class="box"><canvas id="c4"></canvas></div></div>
+    <div class="card"><div class="title">CPU 使用率</div><div class="box"><canvas id="c5"></canvas></div></div>
+    <div class="card"><div class="title">成功率</div><div class="box"><canvas id="c6"></canvas></div></div>
+    <div class="card"><div class="title">吞吐 (Token/s)</div><div class="box"><canvas id="c7"></canvas></div></div>
+    <div class="card"><div class="title">资源使用率</div><div class="box"><canvas id="c8"></canvas></div></div>
+    <div class="card"><div class="title">队列满拒绝次数</div><div class="box"><canvas id="c9"></canvas></div></div>
+    <div class="card"><div class="title">预算拒绝次数</div><div class="box"><canvas id="c10"></canvas></div></div>
+    <div class="card"><div class="title">Sampling 拒绝次数</div><div class="box"><canvas id="c11"></canvas></div></div>
+  </div>
+  <script>
+    const data = {"labels":[3,6,9],"metrics":{"error_rate":{"t":[0.0476,0.2051,0.2222],"o":[0.2525,0.5,0.6667]},"latency_p95_ms":{"t":[7907,6941,6862],"o":[6301,6110,6129]},"actual_rps":{"t":[0.46,0.86,1.35],"o":[0.54,0.93,1.43]},"gc_per_min_avg":{"t":[14.04,13.06,21.35],"o":[8.26,5.12,5.24]},"cpu_usage_avg":{"t":[0.0511,0.046,0.0648],"o":[0.0288,0.0177,0.0212]},"success_rate_avg":{"t":[0.9643,0.8814,0.7498],"o":[0.489,0.5327,0.3946]},"throughput_avg":{"t":[89.62,72.83,120.57],"o":[44.2,35.9,35.57]},"resource_usage_avg":{"t":[0,0,0],"o":[0.0001,0,0]},"reject_queue_full":{"t":[0,0,0],"o":[0,0,0]},"reject_budget":{"t":[0,0,0],"o":[0,0,0]},"reject_sampling":{"t":[37,94,181],"o":[276,84,174]}}};
+    function draw(id, metric, percent){
+      if (!data.metrics[metric]) return;
+      new Chart(document.getElementById(id), {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [
+            { label: 'TRADITIONAL', data: data.metrics[metric].t, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)', tension: 0.25, pointRadius: 4 },
+            { label: 'OBJECT_POOL', data: data.metrics[metric].o, borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.15)', tension: 0.25, pointRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: { legend: { labels: { color: '#94a3b8' } } },
+          scales: {
+            x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+            y: { ticks: { color: '#94a3b8', callback: (v) => percent ? (v * 100).toFixed(1) + '%' : v }, grid: { color: '#334155' } }
+          }
+        }
+      });
+    }
+    draw('c1','error_rate',true);
+    draw('c2','latency_p95_ms',false);
+    draw('c3','actual_rps',false);
+    draw('c4','gc_per_min_avg',false);
+    draw('c5','cpu_usage_avg',true);
+    draw('c6','success_rate_avg',true);
+    draw('c7','throughput_avg',false);
+    draw('c8','resource_usage_avg',true);
+    draw('c9','reject_queue_full',false);
+    draw('c10','reject_budget',false);
+    draw('c11','reject_sampling',false);
+  </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "algorithm" : "TRADITIONAL",
+  "sampleCount" : 2,
+  "samplingRounds" : 2,
+  "samplingSize" : 3,
+  "dynamicBucketingEnabled" : true,
+  "maxContextK" : 32,
+  "bucketCount" : 5,
+  "bucketRanges" : "1024,2048,4096,8192,16384",
+  "bucketWeights" : "30,25,20,15,10",
+  "histogramSampleSize" : 600,
+  "bucketUpdateIntervalSeconds" : 15,
+  "queueCapacity" : 128,
+  "shortBucketWeight" : 45,
+  "mediumBucketWeight" : 35,
+  "longBucketWeight" : 20,
+  "tcasRetrySampleSize" : 256,
+  "trejectHighThreshold" : 0.3,
+  "tforcedReleaseHighThreshold" : 0.2,
+  "tcasRetryP95HighThreshold" : 2.5,
+  "ttuneIntervalSeconds" : 300
+}

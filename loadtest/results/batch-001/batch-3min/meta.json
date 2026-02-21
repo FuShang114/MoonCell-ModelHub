@@ -1,0 +1,13 @@
+{
+  "batchName": "batch-3min",
+  "runId": "2026-02-19T09-06-59-610Z",
+  "startedAt": "2026-02-19T09:06:59.613Z",
+  "baseUrl": "http://127.0.0.1:9061",
+  "rpsLevels": [
+    3,
+    6,
+    9
+  ],
+  "durationSec": 180,
+  "prompt": "请用三点说明系统稳定性优化建议，每点不超过18字。"
+}

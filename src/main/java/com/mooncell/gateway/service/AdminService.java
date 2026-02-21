@@ -10,11 +10,13 @@ import com.mooncell.gateway.dto.HealthyInstanceDto;
 import com.mooncell.gateway.dto.InstanceConfigDto;
 import com.mooncell.gateway.dto.InstanceStatsDto;
 import com.mooncell.gateway.dto.LoadBalancingSettingsDto;
+import com.mooncell.gateway.dto.MonitorMetricsDto;
 import com.mooncell.gateway.dto.ProviderDto;
 import com.mooncell.gateway.dto.ProviderRequest;
 import com.mooncell.gateway.dto.StrategyStatusDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 public class AdminService {
     private final ModelInstanceMapper mapper;
     private final LoadBalancer loadBalancer;
+    private final MonitoringMetricsService monitoringMetricsService;
+    // RestartCoordinator 和持久化仅用于手工重启场景；线上接口改为纯热切换后不再通过这里触发进程退出。
 
     public List<HealthyInstanceDto> getHealthyInstances() {
         log.info("获取健康实例列表");
@@ -82,7 +86,12 @@ public class AdminService {
                 .isActive(true)
                 .build();
 
-        mapper.insert(instance);
+        try {
+            mapper.insert(instance);
+        } catch (DataIntegrityViolationException e) {
+            log.error("新增实例失败，可能是 URL 唯一约束冲突: {}", request.getUrl(), e);
+            throw new Exception("新增失败：URL 已存在（当前库约束为 URL 唯一）。若需同 URL 多实例，请先调整数据库唯一键。");
+        }
 
         // 3. 同步更新LoadBalancer缓存
         loadBalancer.refreshInstances();
@@ -158,9 +167,24 @@ public class AdminService {
         LoadBalancingSettingsDto dto = new LoadBalancingSettingsDto();
         dto.setAlgorithm(settings.getAlgorithm().name());
         dto.setSampleCount(settings.getSampleCount());
+        dto.setSamplingRounds(settings.getSamplingRounds());
+        dto.setSamplingSize(settings.getSamplingSize());
         dto.setDynamicBucketingEnabled(settings.isDynamicBucketingEnabled());
+        dto.setMaxContextK(settings.getMaxContextK());
+        dto.setBucketCount(settings.getBucketCount());
+        dto.setBucketRanges(settings.getBucketRanges());
+        dto.setBucketWeights(settings.getBucketWeights());
         dto.setHistogramSampleSize(settings.getHistogramSampleSize());
         dto.setBucketUpdateIntervalSeconds(settings.getBucketUpdateIntervalSeconds());
+        dto.setBucketUpdateIntervalMinSeconds(settings.getBucketUpdateIntervalMinSeconds());
+        dto.setBucketUpdateIntervalMaxSeconds(settings.getBucketUpdateIntervalMaxSeconds());
+        dto.setOrderedPoolKeys(settings.getOrderedPoolKeys());
+        dto.setQueueCapacity(settings.getQueueCapacity());
+        dto.setTTuneIntervalSeconds(settings.getTTuneIntervalSeconds());
+        dto.setTCasRetrySampleSize(settings.getTCasRetrySampleSize());
+        dto.setTRejectHighThreshold(settings.getTRejectHighThreshold());
+        dto.setTForcedReleaseHighThreshold(settings.getTForcedReleaseHighThreshold());
+        dto.setTCasRetryP95HighThreshold(settings.getTCasRetryP95HighThreshold());
         dto.setShortBucketWeight(settings.getShortBucketWeight());
         dto.setMediumBucketWeight(settings.getMediumBucketWeight());
         dto.setLongBucketWeight(settings.getLongBucketWeight());
@@ -168,6 +192,7 @@ public class AdminService {
     }
 
     public LoadBalancingSettingsDto updateLoadBalancingSettings(LoadBalancingSettingsDto request) {
+        // 基于当前生效配置构造新配置，并仅做热切换，不再触发应用重启。
         LoadBalancingSettings current = loadBalancer.getSettings();
         LoadBalancingSettings updated = current.copy();
         if (request.getAlgorithm() != null) {
@@ -176,14 +201,59 @@ public class AdminService {
         if (request.getSampleCount() != null) {
             updated.setSampleCount(request.getSampleCount());
         }
+        if (request.getSamplingRounds() != null) {
+            updated.setSamplingRounds(request.getSamplingRounds());
+        }
+        if (request.getSamplingSize() != null) {
+            updated.setSamplingSize(request.getSamplingSize());
+        }
         if (request.getDynamicBucketingEnabled() != null) {
             updated.setDynamicBucketingEnabled(request.getDynamicBucketingEnabled());
+        }
+        if (request.getMaxContextK() != null) {
+            updated.setMaxContextK(request.getMaxContextK());
+        }
+        if (request.getBucketCount() != null) {
+            updated.setBucketCount(request.getBucketCount());
+        }
+        if (request.getBucketRanges() != null) {
+            updated.setBucketRanges(request.getBucketRanges());
+        }
+        if (request.getBucketWeights() != null) {
+            updated.setBucketWeights(request.getBucketWeights());
         }
         if (request.getHistogramSampleSize() != null) {
             updated.setHistogramSampleSize(request.getHistogramSampleSize());
         }
         if (request.getBucketUpdateIntervalSeconds() != null) {
             updated.setBucketUpdateIntervalSeconds(request.getBucketUpdateIntervalSeconds());
+        }
+        if (request.getBucketUpdateIntervalMinSeconds() != null) {
+            updated.setBucketUpdateIntervalMinSeconds(request.getBucketUpdateIntervalMinSeconds());
+        }
+        if (request.getBucketUpdateIntervalMaxSeconds() != null) {
+            updated.setBucketUpdateIntervalMaxSeconds(request.getBucketUpdateIntervalMaxSeconds());
+        }
+        if (request.getOrderedPoolKeys() != null) {
+            updated.setOrderedPoolKeys(request.getOrderedPoolKeys());
+        }
+        if (request.getQueueCapacity() != null) {
+            updated.setQueueCapacity(request.getQueueCapacity());
+        }
+        if (request.getTTuneIntervalSeconds() != null) {
+            updated.setTTuneIntervalSeconds(request.getTTuneIntervalSeconds());
+        }
+        if (request.getTCasRetrySampleSize() != null) {
+            updated.setTCasRetrySampleSize(request.getTCasRetrySampleSize());
+        }
+        if (request.getTRejectHighThreshold() != null) {
+            updated.setTRejectHighThreshold(request.getTRejectHighThreshold());
+        }
+        if (request.getTForcedReleaseHighThreshold() != null) {
+            updated.setTForcedReleaseHighThreshold(request.getTForcedReleaseHighThreshold());
+        }
+        if (request.getTCasRetryP95HighThreshold() != null) {
+            updated.setTCasRetryP95HighThreshold(request.getTCasRetryP95HighThreshold());
         }
         if (request.getShortBucketWeight() != null) {
             updated.setShortBucketWeight(request.getShortBucketWeight());
@@ -194,12 +264,49 @@ public class AdminService {
         if (request.getLongBucketWeight() != null) {
             updated.setLongBucketWeight(request.getLongBucketWeight());
         }
+        // 使用 LoadBalancer 内部的平滑热切换逻辑，不再触发进程重启。
         loadBalancer.updateSettings(updated);
-        return getLoadBalancingSettings();
+
+        // 以热切换后的实际配置为准构造返回 DTO。
+        LoadBalancingSettings effective = loadBalancer.getSettings();
+        LoadBalancingSettingsDto dto = new LoadBalancingSettingsDto();
+        dto.setAlgorithm(effective.getAlgorithm().name());
+        dto.setSampleCount(effective.getSampleCount());
+        dto.setSamplingRounds(effective.getSamplingRounds());
+        dto.setSamplingSize(effective.getSamplingSize());
+        dto.setDynamicBucketingEnabled(effective.isDynamicBucketingEnabled());
+        dto.setMaxContextK(effective.getMaxContextK());
+        dto.setBucketCount(effective.getBucketCount());
+        dto.setBucketRanges(effective.getBucketRanges());
+        dto.setBucketWeights(effective.getBucketWeights());
+        dto.setHistogramSampleSize(effective.getHistogramSampleSize());
+        dto.setBucketUpdateIntervalSeconds(effective.getBucketUpdateIntervalSeconds());
+        dto.setBucketUpdateIntervalMinSeconds(effective.getBucketUpdateIntervalMinSeconds());
+        dto.setBucketUpdateIntervalMaxSeconds(effective.getBucketUpdateIntervalMaxSeconds());
+        dto.setOrderedPoolKeys(effective.getOrderedPoolKeys());
+        dto.setQueueCapacity(effective.getQueueCapacity());
+        dto.setTTuneIntervalSeconds(effective.getTTuneIntervalSeconds());
+        dto.setTCasRetrySampleSize(effective.getTCasRetrySampleSize());
+        dto.setTRejectHighThreshold(effective.getTRejectHighThreshold());
+        dto.setTForcedReleaseHighThreshold(effective.getTForcedReleaseHighThreshold());
+        dto.setTCasRetryP95HighThreshold(effective.getTCasRetryP95HighThreshold());
+        dto.setShortBucketWeight(effective.getShortBucketWeight());
+        dto.setMediumBucketWeight(effective.getMediumBucketWeight());
+        dto.setLongBucketWeight(effective.getLongBucketWeight());
+        return dto;
     }
 
     public List<StrategyStatusDto> getStrategyStatuses() {
         return loadBalancer.getStrategyStatuses();
+    }
+
+    public MonitorMetricsDto getMonitorMetrics() {
+        return monitoringMetricsService.getMonitorMetrics();
+    }
+
+    public String resetMetrics() {
+        monitoringMetricsService.resetMetrics();
+        return "success";
     }
 
     public String addProvider(ProviderRequest request) {

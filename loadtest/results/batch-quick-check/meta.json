@@ -1,0 +1,12 @@
+{
+  "batchName": "batch-quick-check",
+  "runId": "2026-02-19T05-25-28-128Z",
+  "startedAt": "2026-02-19T05:25:28.139Z",
+  "baseUrl": "http://127.0.0.1:9061",
+  "rpsLevels": [
+    2,
+    4
+  ],
+  "durationSec": 30,
+  "prompt": "请用三点说明系统稳定性优化建议，每点不超过18字。"
+}

@@ -5,6 +5,7 @@ import com.mooncell.gateway.dto.InstanceConfigDto;
 import com.mooncell.gateway.dto.InstanceStatsDto;
 import com.mooncell.gateway.dto.AddInstanceRequest;
 import com.mooncell.gateway.dto.LoadBalancingSettingsDto;
+import com.mooncell.gateway.dto.MonitorMetricsDto;
 import com.mooncell.gateway.dto.ProviderDto;
 import com.mooncell.gateway.dto.ProviderRequest;
 import com.mooncell.gateway.dto.StrategyStatusDto;
@@ -160,5 +161,17 @@ public class AdminController {
     @GetMapping("/load-balancing/strategy-statuses")
     public List<StrategyStatusDto> getStrategyStatuses() {
         return adminService.getStrategyStatuses();
+    }
+
+    @Operation(summary = "获取监控时序指标", description = "用于监控大屏折线图展示 JVM、吞吐和资源使用趋势")
+    @GetMapping("/monitor-metrics")
+    public MonitorMetricsDto getMonitorMetrics() {
+        return adminService.getMonitorMetrics();
+    }
+
+    @Operation(summary = "清零监控统计数据", description = "清零所有监控统计数据，包括请求计数、失败原因统计等")
+    @PostMapping("/monitor-metrics/reset")
+    public String resetMetrics() {
+        return adminService.resetMetrics();
     }
 }

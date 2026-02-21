@@ -1,0 +1,7 @@
+algo,target_rps,duration_sec,actual_rps,error_rate,latency_p95_ms,gc_per_min_avg,cpu_usage_avg,qps_avg,success_rate_avg,failure_rate_avg,throughput_avg,resource_usage_avg,reject_queue_full,reject_budget,reject_sampling
+TRADITIONAL,3,180,0.42,0.0133,8382.00,7.12,0.0237,0.45,0.9933,0.0067,32.44,0.0000,0,0,0
+TRADITIONAL,6,180,0.64,0.0083,8551.00,8.52,0.0349,0.74,0.9917,0.0000,53.04,0.0000,0,0,0
+TRADITIONAL,9,180,1.00,0.0000,6686.00,16.50,0.0547,1.43,1.0992,0.0000,100.18,0.0000,0,0,0
+OBJECT_POOL,3,180,0.56,0.3235,6764.00,11.51,0.0444,1.38,1.0286,0.2230,63.74,0.0000,0,0,0
+OBJECT_POOL,6,180,0.96,0.3563,6592.00,16.99,0.0622,2.19,0.8225,0.1849,113.76,0.0000,0,0,0
+OBJECT_POOL,9,180,2.39,0.8750,5239.00,8.20,0.0365,2.76,0.3346,0.6918,55.19,0.0000,0,0,451

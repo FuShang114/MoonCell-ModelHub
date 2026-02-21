@@ -1,0 +1,3 @@
+{"ts":1771498936423,"type":"run_start","runDir":"loadtest\\results\\batch-001\\batch-3min-final\\batch-5min-compare"}
+{"ts":1771498936433,"type":"case_start","algo":"TRADITIONAL","rps":6}
+{"ts":1771498939608,"type":"run_error","message":"fetch failed"}

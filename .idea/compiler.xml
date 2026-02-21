@@ -12,7 +12,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="mooncell-gateway" options="-parameters" />
+      <module name="mooncell-gateway" options="-parameters --add-modules java.management,jdk.management" />
     </option>
   </component>
 </project>

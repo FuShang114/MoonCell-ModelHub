@@ -1,5 +1,12 @@
 package com.mooncell.gateway.dto;
 
+import lombok.Data;
+
+/**
+ * 策略运行状态DTO
+ * 用于展示负载均衡策略的运行时状态信息
+ */
+@Data
 public class StrategyStatusDto {
     private String runtimeId;
     private String algorithm;
@@ -11,84 +18,29 @@ public class StrategyStatusDto {
     private Integer shortWeight;
     private Integer mediumWeight;
     private Integer longWeight;
-
-    public String getRuntimeId() {
-        return runtimeId;
-    }
-
-    public void setRuntimeId(String runtimeId) {
-        this.runtimeId = runtimeId;
-    }
-
-    public String getAlgorithm() {
-        return algorithm;
-    }
-
-    public void setAlgorithm(String algorithm) {
-        this.algorithm = algorithm;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public Integer getInflightLeases() {
-        return inflightLeases;
-    }
-
-    public void setInflightLeases(Integer inflightLeases) {
-        this.inflightLeases = inflightLeases;
-    }
-
-    public Long getSinceEpochMs() {
-        return sinceEpochMs;
-    }
-
-    public void setSinceEpochMs(Long sinceEpochMs) {
-        this.sinceEpochMs = sinceEpochMs;
-    }
-
-    public Integer getShortBoundaryTokens() {
-        return shortBoundaryTokens;
-    }
-
-    public void setShortBoundaryTokens(Integer shortBoundaryTokens) {
-        this.shortBoundaryTokens = shortBoundaryTokens;
-    }
-
-    public Integer getMediumBoundaryTokens() {
-        return mediumBoundaryTokens;
-    }
-
-    public void setMediumBoundaryTokens(Integer mediumBoundaryTokens) {
-        this.mediumBoundaryTokens = mediumBoundaryTokens;
-    }
-
-    public Integer getShortWeight() {
-        return shortWeight;
-    }
-
-    public void setShortWeight(Integer shortWeight) {
-        this.shortWeight = shortWeight;
-    }
-
-    public Integer getMediumWeight() {
-        return mediumWeight;
-    }
-
-    public void setMediumWeight(Integer mediumWeight) {
-        this.mediumWeight = mediumWeight;
-    }
-
-    public Integer getLongWeight() {
-        return longWeight;
-    }
-
-    public void setLongWeight(Integer longWeight) {
-        this.longWeight = longWeight;
-    }
+    private Integer objectHoldSeconds;
+    private Integer queueDepth;
+    private Integer queueCapacity;
+    private Integer bucketCount;
+    private String bucketRanges;
+    private String bucketWeights;
+    private Integer formulaRpm;
+    private Integer formulaTpm;
+    private Integer formulaTotal;
+    private Integer totalObjects;
+    private String bucketObjectCounts;
+    private String bucketOccupiedCounts;
+    private String bucketUsageRates;
+    private Integer lastResizeDeleted;
+    private Integer lastResizeAdded;
+    private Integer activeOccupiedObjects;
+    private Long drainDurationMs;
+    private Long rejectQueueFull;
+    private Long rejectBudget;
+    private Long rejectSampling;
+    private Double tAllocSuccessRate;
+    private Double tRejectRate;
+    private Double tForcedReleaseRate;
+    private Double tCasRetryPerSuccess;
+    private Double tCasRetryP95;
 }

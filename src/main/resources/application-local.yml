@@ -18,9 +18,11 @@ spring:
       port: 6379
       database: 0
 
+  # 注意：为避免在本地/CI 启动时自动建表或改动数据库，这里关闭 Spring Boot 的 SQL 初始化。
+  # 你可以手动在需要的时候执行 src/main/resources/sql/001_init_gateway.sql。
   sql:
     init:
-      mode: always
+      mode: never
       schema-locations: classpath:sql/001_init_gateway.sql
       encoding: UTF-8
 

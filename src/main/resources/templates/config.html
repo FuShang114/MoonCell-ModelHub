@@ -198,6 +198,38 @@
             border: 1px solid #eef1f7;
         }
 
+        .metric-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid #eef1f7;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .chart-card {
+            border: 1px solid #eef1f7;
+            border-radius: 10px;
+            padding: 10px;
+            background: #fcfdff;
+        }
+
+        .chart-title {
+            font-size: 0.82rem;
+            color: #6b7280;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .chart-box {
+            height: 170px;
+        }
+
         .section-title {
             display: flex;
             align-items: center;
@@ -647,6 +679,7 @@
                     <p>仿 Nacos 风格的网关监控视图，实时聚合所有大模型实例状态</p>
                 </div>
                 <div class="top-actions">
+                    <button class="btn btn-ghost" onclick="resetMetrics()">清零统计数据</button>
                     <button class="btn btn-ghost" onclick="refreshInstances()">刷新实例</button>
                     <a class="btn btn-ghost" href="/settings">策略设置</a>
                     <a class="btn btn-primary" href="/admin/debug">进入调试</a>
@@ -688,6 +721,61 @@
                     </div>
                 </div>
 
+                <div class="metric-section">
+                    <div class="section-title">
+                        <h2>运行指标监控</h2>
+                        <span class="section-meta">JVM/系统/网关核心指标（近实时）</span>
+                    </div>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <div class="chart-title">JVM GC 频率（次/分钟）</div>
+                            <div class="chart-box"><canvas id="chart-gc"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">CPU 使用率</div>
+                            <div class="chart-box"><canvas id="chart-cpu"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">QPS</div>
+                            <div class="chart-box"><canvas id="chart-qps"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">成功率</div>
+                            <div class="chart-box"><canvas id="chart-success"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">吞吐量（估算Token/s）</div>
+                            <div class="chart-box"><canvas id="chart-throughput"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">资源使用率（max(RPM,TPM)）</div>
+                            <div class="chart-box"><canvas id="chart-resource"></canvas></div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <div class="section-title">
+                            <h2>失败原因统计</h2>
+                            <span class="section-meta">所有历史累计的失败请求分布</span>
+                        </div>
+                        <table class="config-table">
+                            <thead>
+                                <tr>
+                                    <th>失败原因</th>
+                                    <th>累计失败次数</th>
+                                    <th>占总失败请求比例</th>
+                                </tr>
+                            </thead>
+                            <tbody id="failure-reasons-body">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: #6b7280; padding: 1rem;">
+                                        暂无失败数据
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="error-message" id="error-message"></div>
                 <div class="success-message" id="success-message"></div>
 
@@ -703,10 +791,7 @@
                             <span class="legend-dot bad"></span>异常
                         </div>
                         <div class="auto-refresh">
-                            <span style="font-size: 0.85rem; color: #6b7280;">自动刷新</span>
-                            <button class="refresh-toggle" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
-                                开启
-                            </button>
+                            <span style="font-size: 0.85rem; color: #6b7280;">自动刷新已开启（每3秒）</span>
                         </div>
                     </div>
 
@@ -723,7 +808,6 @@
                                 <th>模型</th>
                                 <th>状态</th>
                                 <th>请求计数</th>
-                                <th>失败次数</th>
                                 <th>最后心跳</th>
                             </tr>
                         </thead>
@@ -918,6 +1002,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let autoRefreshInterval;
         let isAutoRefreshEnabled = false;
@@ -925,6 +1010,7 @@
         let editingInstanceId = null;
         let providers = [];
         let editingProviderId = null;
+        const metricCharts = {};
 
         function setBodyScrollLocked(locked) {
             document.body.classList.toggle('modal-open', locked);
@@ -954,28 +1040,15 @@
 
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
+            initMetricCharts();
             loadData();
             loadConfigInstances();
             loadProviders();
             setInterval(updateLastUpdateTime, 1000);
-        });
-
-        // 切换自动刷新
-        function toggleAutoRefresh() {
-            const btn = document.getElementById('auto-refresh-btn');
-            
-            if (isAutoRefreshEnabled) {
-                clearInterval(autoRefreshInterval);
-                btn.textContent = '开启';
-                btn.classList.remove('active');
-                isAutoRefreshEnabled = false;
-            } else {
-                autoRefreshInterval = setInterval(loadData, 10000); // 每10秒刷新
-                btn.textContent = '关闭';
-                btn.classList.add('active');
+            // 直接开启自动刷新（每3秒刷新一次）
+                autoRefreshInterval = setInterval(loadData, 3000); // 每3秒刷新
                 isAutoRefreshEnabled = true;
-            }
-        }
+        });
 
         // 加载数据
         async function loadData() {
@@ -984,22 +1057,26 @@
                 hideMessages();
 
                 // 并行加载统计数据和实例数据
-                const [statsResponse, instancesResponse] = await Promise.all([
+                const [statsResponse, instancesResponse, monitorMetricsResponse] = await Promise.all([
                     fetch('/admin/instance-stats'),
-                    fetch('/admin/healthy-instances')
+                    fetch('/admin/healthy-instances'),
+                    fetch('/admin/monitor-metrics')
                 ]);
 
-                if (!statsResponse.ok || !instancesResponse.ok) {
+                if (!statsResponse.ok || !instancesResponse.ok || !monitorMetricsResponse.ok) {
                     throw new Error('数据加载失败');
                 }
 
                 const stats = await statsResponse.json();
                 const instances = await instancesResponse.json();
+                const monitorMetrics = await monitorMetricsResponse.json();
 
                 updateStats(stats);
                 updateInstancesTable(instances);
+                updateMetricCharts(monitorMetrics);
+                updateFailureReasons(monitorMetrics.failureReasons);
 
-                showSuccess('数据加载成功');
+                // 移除成功提示，静默刷新
 
             } catch (error) {
                 console.error('加载数据失败:', error);
@@ -1063,14 +1140,123 @@
                         </span>
                     </td>
                     <td>${instance.requestCount || 0}</td>
-                    <td style="color: ${instance.failureCount > 0 ? '#dc2626' : '#059669'}; font-weight: 600;">
-                        ${instance.failureCount || 0}
-                    </td>
                     <td style="font-size: 0.8rem; color: #6b7280;">${instance.lastHeartbeat || '-'}</td>
                 `;
                 
                 tbody.appendChild(row);
             });
+        }
+
+        function initMetricCharts() {
+            const defs = [
+                { id: 'gc', el: 'chart-gc', label: 'GC次/分钟', color: '#7c3aed', percent: false },
+                { id: 'cpu', el: 'chart-cpu', label: 'CPU', color: '#2563eb', percent: true },
+                { id: 'qps', el: 'chart-qps', label: 'QPS', color: '#16a34a', percent: false },
+                { id: 'success', el: 'chart-success', label: '成功率', color: '#059669', percent: true },
+                { id: 'throughput', el: 'chart-throughput', label: '吞吐Token/s', color: '#f59e0b', percent: false },
+                { id: 'resource', el: 'chart-resource', label: '资源使用率', color: '#0ea5e9', percent: true }
+            ];
+            defs.forEach(def => {
+                const canvas = document.getElementById(def.el);
+                if (!canvas) return;
+                metricCharts[def.id] = new Chart(canvas, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: def.label,
+                            data: [],
+                            borderColor: def.color,
+                            backgroundColor: def.color + '20',
+                            pointRadius: 0,
+                            borderWidth: 2,
+                            tension: 0.25
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { maxTicksLimit: 6, color: '#9ca3af' }, grid: { display: false } },
+                            y: {
+                                ticks: {
+                                    color: '#9ca3af',
+                                    callback: function(value) {
+                                        if (def.percent) return Math.round(value * 100) + '%';
+                                        return Number(value).toFixed(1);
+                                    }
+                                },
+                                grid: { color: '#eef2ff' },
+                                min: 0,
+                                max: def.percent ? 1 : undefined
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function updateMetricCharts(metrics) {
+            if (!metrics) return;
+            setChartSeries('gc', metrics.gcRateSeries, false);
+            setChartSeries('cpu', metrics.cpuUsageSeries, true);
+            setChartSeries('qps', metrics.qpsSeries, false);
+            setChartSeries('success', metrics.successRateSeries, true);
+            setChartSeries('throughput', metrics.throughputSeries, false);
+            setChartSeries('resource', metrics.resourceUsageSeries, true);
+        }
+
+        function updateFailureReasons(list) {
+            const tbody = document.getElementById('failure-reasons-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            const items = Array.isArray(list) ? list : [];
+            if (items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #6b7280; padding: 1rem;">
+                            暂无失败数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            items.sort((a, b) => (b.count || 0) - (a.count || 0));
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                const name = item.reason || item.reasonKey || '未知原因';
+                const count = item.count || 0;
+                const ratio = item.ratio != null ? (Number(item.ratio) * 100).toFixed(1) + '%' : '-';
+                tr.innerHTML = `
+                    <td>${escapeHtml(name)}</td>
+                    <td>${count}</td>
+                    <td>${ratio}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function setChartSeries(key, series, isPercent) {
+            const chart = metricCharts[key];
+            if (!chart) return;
+            const points = Array.isArray(series) ? series : [];
+            const labels = points.map(p => formatTime(p.timestamp));
+            const values = points.map(p => Number(p.value || 0));
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = values;
+            if (isPercent) {
+                chart.options.scales.y.max = 1;
+            }
+            chart.update();
+        }
+
+        function formatTime(ts) {
+            if (!ts) return '-';
+            const d = new Date(ts);
+            if (isNaN(d.getTime())) return '-';
+            return d.toLocaleTimeString();
         }
 
         // 加载实例配置
@@ -1241,16 +1427,34 @@
             }
         }
 
+        // OpenAPI ChatCompletion 入参字段（值类型选项 = 从网关请求取值的来源）
+        const OPENAPI_VALUE_TYPES = [
+            { value: 'fixed', label: '固定值' },
+            { value: 'model', label: '$model (模型名)' },
+            { value: 'messages', label: '$messages (消息列表)' },
+            { value: 'stream', label: '$stream (是否流式)' },
+            { value: 'temperature', label: '$temperature (温度)' },
+            { value: 'max_tokens', label: '$max_tokens (最大Token)' },
+            { value: 'top_p', label: '$top_p (Top-p)' },
+            { value: 'frequency_penalty', label: '$frequency_penalty (频率惩罚)' },
+            { value: 'presence_penalty', label: '$presence_penalty (存在惩罚)' },
+            { value: 'stop', label: '$stop (停止序列)' },
+            { value: 'user', label: '$user (用户标识)' },
+            { value: 'idempotency_key', label: '$idempotency_key (幂等键)' },
+            { value: 'extra', label: '$extra (扩展参数)' }
+        ];
+
         function addTemplateRow(key = '', type = 'fixed', value = '') {
             const tbody = document.getElementById('template-rows');
             const row = document.createElement('tr');
+            let optionsHtml = OPENAPI_VALUE_TYPES.map(t =>
+                `<option value="${t.value}" ${type === t.value ? 'selected' : ''}>${t.label}</option>`
+            ).join('');
             row.innerHTML = `
                 <td><input class="input-sm" value="${escapeHtml(key)}" placeholder="字段名"></td>
                 <td>
                     <select class="select-sm" onchange="onValueTypeChange(this)">
-                        <option value="fixed" ${type === 'fixed' ? 'selected' : ''}>固定值</option>
-                        <option value="model" ${type === 'model' ? 'selected' : ''}>$model</option>
-                        <option value="messages" ${type === 'messages' ? 'selected' : ''}>$messages</option>
+                        ${optionsHtml}
                     </select>
                 </td>
                 <td><input class="input-sm" value="${escapeHtml(value)}" placeholder="值或JSON"></td>
@@ -1279,7 +1483,8 @@
             } else {
                 input.disabled = true;
                 input.value = '';
-                input.placeholder = select.value === 'model' ? '$model' : '$messages';
+                const def = OPENAPI_VALUE_TYPES.find(t => t.value === select.value);
+                input.placeholder = def ? def.label.split(' ')[0] : '$' + select.value;
             }
         }
 
@@ -1292,13 +1497,13 @@
                 if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
                     return [];
                 }
+                const placeholderTypes = OPENAPI_VALUE_TYPES.filter(t => t.value !== 'fixed')
+                    .map(t => ({ placeholder: '$' + t.value, type: t.value }));
                 return Object.keys(obj).map(key => {
                     const value = obj[key];
-                    if (value === '$model') {
-                        return { key, type: 'model', value: '' };
-                    }
-                    if (value === '$messages') {
-                        return { key, type: 'messages', value: '' };
+                    if (typeof value === 'string' && value.startsWith('$')) {
+                        const found = placeholderTypes.find(p => p.placeholder === value);
+                        if (found) return { key, type: found.type, value: '' };
                     }
                     if (typeof value === 'object') {
                         return { key, type: 'fixed', value: JSON.stringify(value) };
@@ -1321,10 +1526,8 @@
                 if (!key) {
                     return;
                 }
-                if (type === 'model') {
-                    result[key] = '$model';
-                } else if (type === 'messages') {
-                    result[key] = '$messages';
+                if (type !== 'fixed') {
+                    result[key] = '$' + type;
                 } else {
                     const raw = valueInput.value.trim();
                     result[key] = parseJsonOrString(raw);
@@ -1361,7 +1564,13 @@
                 }
 
                 if (!response.ok) {
-                    throw new Error('保存失败');
+                    let msg = '保存失败';
+                    try {
+                        const text = await response.text();
+                        if (text) msg = text;
+                    } catch (e) {
+                    }
+                    throw new Error(msg);
                 }
                 showSuccess('实例保存成功');
                 closeInstanceModal();
@@ -1486,6 +1695,29 @@
                 showError('刷新失败: ' + error.message);
             } finally {
                 showLoading(false);
+            }
+        }
+
+        // 清零统计数据
+        async function resetMetrics() {
+            if (!confirm('确定要清零所有监控统计数据吗？此操作不可恢复。')) {
+                return;
+            }
+            try {
+                const response = await fetch('/admin/monitor-metrics/reset', {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('清零失败');
+                }
+
+                showSuccess('统计数据已清零');
+                await loadData(); // 重新加载数据
+
+            } catch (error) {
+                console.error('清零失败:', error);
+                showError('清零失败: ' + error.message);
             }
         }
 

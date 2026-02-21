@@ -14,9 +14,15 @@ import java.util.List;
 @Slf4j
 public class HeartbeatService {
     private final ModelInstanceMapper modelMapper;
-    private final WebClient.Builder webClientBuilder;
+    private final InstanceWebClientManager instanceWebClientManager;  // 使用实例专用 WebClient 管理器
     private final GatewayService gatewayService;
 
+    /**
+     * 周期性巡检所有模型实例健康状态
+     * <p>
+     * 对于已标记不健康或超过一定时间未使用的实例，会主动发起一次心跳请求，
+     * 以便尽快探测恢复并更新实例状态。
+     */
     public void checkHealth() {
         List<ModelInstance> allInstances = modelMapper.findAll();
         allInstances.forEach(instance -> {
@@ -26,11 +32,19 @@ public class HeartbeatService {
         });
     }
 
+    /**
+     * 对单个实例执行一次心跳检测
+     * <p>
+     * 使用与业务请求相同的下游 URL 和 payload 构造规则，只是内容固定为 "ping"，
+     * 成功（2xx）则认为实例恢复并调用 {@link ModelInstance#recordSuccess(int)}。
+     *
+     * @param instance 需要探测的模型实例
+     */
     public void performHeartbeat(ModelInstance instance) {
-        String targetUrl = gatewayService.buildTargetUrl(instance);
-
-        webClientBuilder.build().post()
-                .uri(targetUrl)
+        // 使用实例专用的 WebClient，复用连接池
+        WebClient instanceWebClient = instanceWebClientManager.getWebClient(instance);
+        instanceWebClient.post()
+                .uri(instance.getUrl())
                 .headers(headers -> {
                     headers.add("Content-Type", "application/json");
                     headers.setBearerAuth(instance.getApiKey());

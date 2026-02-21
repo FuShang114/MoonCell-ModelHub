@@ -1,0 +1,14 @@
+{
+  "batchName": "batch-006",
+  "runId": "2026-02-20T06-54-12-382Z",
+  "startedAt": "2026-02-20T06:54:12.386Z",
+  "baseUrl": "http://127.0.0.1:9061",
+  "rpsLevels": [
+    4,
+    8,
+    12
+  ],
+  "durationSec": 300,
+  "dataDistribution": "homogeneous",
+  "mixedWeight": 0.5
+}
