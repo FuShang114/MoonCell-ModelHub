@@ -11,6 +11,9 @@ WORKDIR /app
 
 RUN useradd -r -u 1001 appuser
 
+# 创建日志目录，Logback 不会自动创建父目录，需预先创建
+RUN mkdir -p /app/logs && chown -R appuser:appuser /app/logs
+
 COPY --from=builder /app/target/*.jar /app/app.jar
 
 EXPOSE 9061
