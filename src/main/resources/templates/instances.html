@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonCell Gateway 实例管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            overflow-y: scroll;
+            scrollbar-gutter: stable;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fb;
+            color: #1f2937;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+        .sidebar {
+            width: 220px;
+            flex: 0 0 220px;
+            min-width: 220px;
+            background: #111827;
+            color: #e5e7eb;
+            padding: 20px 16px;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1rem; margin-bottom: 28px; }
+        .brand-badge {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700;
+        }
+        .nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav a {
+            color: #e5e7eb; text-decoration: none; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem;
+        }
+        .nav a.active, .nav a:hover { background: rgba(59, 130, 246, 0.2); color: #fff; }
+
+        .content {
+            flex: 1;
+            min-width: 0;
+            padding: 24px 28px 36px;
+            display: flex;
+            flex-direction: column;
+        }
+        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 12px; }
+        .title-group h1 { font-size: 1.6rem; margin-bottom: 4px; }
+        .title-group p { color: #6b7280; font-size: 0.9rem; }
+
+        .btn {
+            padding: 0.6rem 1.1rem;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #fff;
+            color: #1f2937;
+        }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-ghost { background: #fff; color: #1f2937; border: 1px solid #e5e7eb; }
+        .btn-ghost:hover { border-color: #cbd5f5; color: #1d4ed8; }
+        .btn-outline { background: #fff; color: #2563eb; border: 1px solid #c7d2fe; }
+        .btn-outline:hover { border-color: #2563eb; }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-sm { padding: 0.45rem 0.8rem; border-radius: 8px; font-size: 0.82rem; }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .btn-icon span[aria-hidden="true"] {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .btn-icon::after {
+            content: '添加服务商';
+            position: absolute;
+            top: 110%;
+            right: 0;
+            background: #111827;
+            color: #f9fafb;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 999px;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateY(4px);
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            z-index: 10;
+        }
+
+        .btn-icon:focus-visible::after {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .panel {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #eef1f7;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .error-message, .success-message {
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: none;
+            border: 1px solid transparent;
+        }
+        .error-message { background-color: #fef2f2; border-color: #fecaca; color: #dc2626; }
+        .success-message { background-color: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+
+        .crumb-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: nowrap;
+        }
+
+        .crumbs-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 2px;
+            overscroll-behavior-x: contain;
+        }
+
+        .crumbs-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+
+        .crumbs-wrapper {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .crumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: nowrap;
+            user-select: none;
+        }
+
+        .scroll-btn {
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            color: #6b7280;
+            border-radius: 999px;
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+        }
+
+        .scroll-btn:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .crumb {
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #111827;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+        .crumb.active {
+            border-color: #c7d2fe;
+            background: #eef2ff;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+        .crumb-meta { color: #6b7280; font-weight: 500; font-size: 0.8rem; }
+
+        .instances-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .instances-head h2 { font-size: 1.05rem; }
+        .subtle { color: #6b7280; font-size: 0.85rem; }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid #eef1f7;
+            border-radius: 14px;
+            padding: 12px 12px 12px;
+            cursor: pointer;
+            position: relative;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .card:hover { border-color: #cbd5f5; box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06); }
+        .card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; color: #374151; word-break: break-all; }
+        .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .tag {
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            border: 1px solid #e5e7eb;
+            color: #374151;
+            background: #f9fafb;
+        }
+        .tag.ok { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+        .tag.bad { border-color: #fecaca; background: #fef2f2; color: #dc2626; }
+
+        .select-box {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border-radius: 6px;
+            border: 1px solid #dbe1f2;
+        }
+        .card.manage .select-box { display: flex; }
+        .card.manage { padding-left: 40px; }
+        .select-box input { width: 14px; height: 14px; }
+
+        .context-menu {
+            position: fixed;
+            z-index: 9999;
+            min-width: 140px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(17, 24, 39, 0.14);
+            padding: 6px;
+            display: none;
+        }
+        .context-item {
+            padding: 10px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .context-item:hover { background: #f3f4f6; }
+        .context-item.danger { color: #dc2626; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0; top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.45);
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px;
+            width: 100%;
+            max-width: 920px;
+            position: relative;
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .modal-header h3 { font-size: 1.1rem; }
+        .modal-close {
+            background: #f3f4f6;
+            border: none;
+            border-radius: 10px;
+            width: 34px;
+            height: 34px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #6b7280;
+        }
+        .modal-close:hover { background: #e5e7eb; color: #374151; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            align-items: start;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 0.85rem; font-weight: 650; color: #374151; }
+        .input-sm, .select-sm, textarea.input-sm {
+            width: 100%;
+            padding: 0.55rem 0.7rem;
+            border: 1px solid #dbe1f2;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: #fff;
+        }
+        textarea.input-sm { resize: vertical; min-height: 80px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+
+        .checkbox-row { display: flex; align-items: center; gap: 8px; height: 40px; }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .test-box {
+            margin-top: 14px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 12px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        .test-result {
+            display: none;
+            padding: 10px 12px;
+            background: #f9fafb;
+            border-radius: 10px;
+            border: 1px solid #eef1f7;
+            max-height: 220px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.82rem;
+        }
+
+        .instances-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .instances-panel .cards {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .instances-panel .cards.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #6b7280;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .app {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+            }
+            .sidebar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+            .nav { flex-direction: row; flex-wrap: wrap; }
+            .crumb-bar { flex-wrap: wrap; }
+        }
+        @media (max-width: 780px) {
+            .content { padding: 18px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .topbar { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-badge">MC</span>
+            MoonCell Gateway
+        </div>
+        <nav class="nav">
+            <a href="/config">监控大盘</a>
+            <a class="active" href="/admin/instances-ui">实例 &amp; 服务商</a>
+            <a href="/admin/debug">调试台</a>
+            <a href="/settings">策略设置</a>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <div class="topbar">
+            <div class="title-group">
+                <h1>实例管理</h1>
+                <p>面包屑选择服务商，卡片流式管理实例。支持批量删除、测试连接与保存后自动心跳。</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <a class="btn btn-ghost" href="/config">返回监控</a>
+                <a class="btn btn-ghost" href="/admin/providers-ui">服务商管理</a>
+            </div>
+        </div>
+
+        <div class="error-message" id="error-message"></div>
+        <div class="success-message" id="success-message"></div>
+
+        <section class="panel">
+            <div class="crumb-bar">
+                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                    <button class="scroll-btn" type="button" onclick="scrollProviders(-1)">‹</button>
+                    <div class="crumbs-wrapper" id="provider-scroll-wrapper">
+                        <div class="crumbs" id="provider-crumbs"></div>
+                    </div>
+                    <button class="scroll-btn" type="button" onclick="scrollProviders(1)">›</button>
+                </div>
+                <button class="btn btn-primary btn-icon" type="button" onclick="openCreateProvider()">
+                    <span class="sr-only">添加服务商</span>
+                    <span aria-hidden="true">+</span>
+                </button>
+            </div>
+            <div class="subtle" style="margin-top:10px;">
+                右击服务商面包屑可编辑/删除（若服务商下有实例将拒绝删除）。
+            </div>
+        </section>
+
+        <section class="panel instances-panel">
+            <div class="instances-head">
+                <div>
+                    <h2 id="instances-title">实例列表</h2>
+                    <div class="subtle" id="instances-subtitle">请选择一个服务商</div>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn btn-outline" id="btn-manage" onclick="toggleManage()">管理</button>
+                    <button class="btn btn-danger" id="btn-batch-delete" onclick="batchDelete()" style="display:none;">删除选中</button>
+                    <button class="btn btn-primary" onclick="openCreateInstance()">+ 添加实例</button>
+                </div>
+            </div>
+
+            <div class="cards" id="instance-cards"></div>
+        </section>
+    </main>
+</div>
+
+<div class="context-menu" id="provider-menu">
+    <div class="context-item" onclick="onContextEditProvider()">编辑</div>
+    <div class="context-item danger" onclick="onContextDeleteProvider()">删除</div>
+</div>
+
+<!-- Provider modal -->
+<div class="modal" id="provider-modal" onclick="onModalBackdropClick(event, 'provider-modal', closeProviderModal)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3 id="provider-modal-title">新增服务商</h3>
+            <button class="modal-close" onclick="closeProviderModal()">✕</button>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">服务商名称</label>
+                <input class="input-sm" id="provider-name" placeholder="openai / azure / ark">
+            </div>
+            <div class="form-group">
+                <label class="form-label">描述</label>
+                <input class="input-sm" id="provider-desc" placeholder="服务商说明">
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">请求转换规则 (JSON，可选)</label>
+                <textarea class="input-sm" id="provider-request-rule" rows="4"
+                          placeholder='{"type":"template","template":{"model":"$model","messages":"$messages","stream":"$stream"}}'></textarea>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">响应转换规则 (JSON，可选)</label>
+                <textarea class="input-sm" id="provider-response-rule" rows="4"
+                          placeholder='{"type":"mapping","requestIdPath":"id","contentPath":"choices.0.delta.content","seqPath":"choices.0.index"}'></textarea>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeProviderModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveProvider()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- Instance modal -->
+<div class="modal" id="instance-modal" onclick="onModalBackdropClick(event, 'instance-modal', closeInstanceModal)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3 id="instance-modal-title">新增实例</h3>
+            <button class="modal-close" onclick="closeInstanceModal()">✕</button>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">服务商</label>
+                <select class="select-sm" id="instance-provider"></select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">模型</label>
+                <input class="input-sm" id="instance-model" placeholder="gpt-4 / deepseek-chat">
+            </div>
+            <div class="form-group">
+                <label class="form-label">URL</label>
+                <input class="input-sm" id="instance-url" placeholder="https://api.openai.com/v1/chat/completions">
+            </div>
+            <div class="form-group">
+                <label class="form-label">API Key</label>
+                <input class="input-sm" id="instance-apiKey" placeholder="sk-xxxx">
+            </div>
+            <div class="form-group">
+                <label class="form-label">RPM 上限</label>
+                <input class="input-sm" id="instance-rpmLimit" type="number" min="1" placeholder="600">
+            </div>
+            <div class="form-group">
+                <label class="form-label">TPM 上限</label>
+                <input class="input-sm" id="instance-tpmLimit" type="number" min="1" placeholder="600000">
+            </div>
+            <div class="form-group">
+                <label class="form-label">启用状态</label>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="instance-active" checked>
+                    <span class="subtle">启用该实例</span>
+                </div>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">请求体模板 post_model (JSON 字符串，可选)</label>
+                <textarea class="input-sm" id="instance-postModel" rows="5"
+                          placeholder='{"model":"$model","messages":"$messages","stream":true}'></textarea>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">OpenAPI → 下游请求转换规则 (JSON 预览，继承自服务商)</label>
+                <textarea class="input-sm" id="instance-requestRule-preview" rows="6" readonly
+                          placeholder="选择服务商后会自动展示对应规则（JSON 格式）"></textarea>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">下游 SSE → OpenAPI 响应转换规则 (JSON 预览，继承自服务商)</label>
+                <textarea class="input-sm" id="instance-responseRule-preview" rows="6" readonly
+                          placeholder="选择服务商后会自动展示对应规则（JSON 格式）"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">原始输出</label>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="instance-rawEnabled">
+                    <span class="subtle">直接透传下游响应</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-box">
+            <div class="form-group">
+                <label class="form-label">测试消息（用于测试连接）</label>
+                <input class="input-sm" id="instance-testMessage" placeholder="ping" value="ping">
+            </div>
+            <div class="test-result" id="test-result"></div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="testConnection()">测试连接</button>
+            <button class="btn btn-ghost" onclick="closeInstanceModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveInstance()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let providers = [];
+    let instances = [];
+    let selectedProviderId = null;
+    let contextProviderId = null;
+    let manageMode = false;
+    let selectedInstanceIds = new Set();
+    let editingProviderId = null;
+    let editingInstanceId = null;
+
+    function showError(message) {
+        const el = document.getElementById('error-message');
+        el.textContent = message;
+        el.style.display = 'block';
+        document.getElementById('success-message').style.display = 'none';
+        setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    function showSuccess(message) {
+        const el = document.getElementById('success-message');
+        el.textContent = message;
+        el.style.display = 'block';
+        document.getElementById('error-message').style.display = 'none';
+        setTimeout(() => { el.style.display = 'none'; }, 3500);
+    }
+
+    function onModalBackdropClick(event, modalId, closeFn) {
+        if (event.target && event.target.id === modalId) {
+            closeFn();
+        }
+    }
+
+    function openModal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = 'flex';
+        const sbw = window.innerWidth - document.documentElement.clientWidth;
+        if (sbw > 0) document.body.style.paddingRight = sbw + 'px';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = 'none';
+        const anyOpen = Array.from(document.querySelectorAll('.modal')).some(m => m.style.display === 'flex');
+        document.body.style.overflow = anyOpen ? 'hidden' : 'auto';
+        if (!anyOpen) document.body.style.paddingRight = '';
+    }
+
+    async function loadProviders() {
+        const resp = await fetch('/admin/providers');
+        if (!resp.ok) throw new Error('加载服务商失败');
+        providers = await resp.json();
+        if (!selectedProviderId && providers.length > 0) {
+            selectedProviderId = providers[0].id;
+        }
+        renderProviders();
+        fillProviderSelect();
+        renderInstances();
+    }
+
+    async function loadInstances() {
+        const resp = await fetch('/admin/instances');
+        if (!resp.ok) throw new Error('加载实例失败');
+        instances = await resp.json();
+        renderInstances();
+    }
+
+    function providerNameById(id) {
+        const p = providers.find(x => x.id === id);
+        return p ? p.name : null;
+    }
+
+    function findProviderByName(name) {
+        if (!name) return null;
+        return providers.find(x => x.name === name) || null;
+    }
+
+    function prettyJsonOrOriginal(str) {
+        if (!str) return '';
+        const trimmed = String(str).trim();
+        if (!trimmed) return '';
+        try {
+            return JSON.stringify(JSON.parse(trimmed), null, 2);
+        } catch (e) {
+            // 若不是合法 JSON，则直接原样展示，避免误导用户
+            return trimmed;
+        }
+    }
+
+    function updateInstanceConversionRulePreviewByProviderName(providerName) {
+        const reqEl = document.getElementById('instance-requestRule-preview');
+        const respEl = document.getElementById('instance-responseRule-preview');
+        if (!reqEl || !respEl) return;
+
+        const p = findProviderByName(providerName);
+        if (!p) {
+            reqEl.value = '';
+            respEl.value = '';
+            return;
+        }
+
+        reqEl.value = prettyJsonOrOriginal(p.requestConversionRule || '');
+        respEl.value = prettyJsonOrOriginal(p.responseConversionRule || '');
+    }
+
+    function countInstancesByProviderName(name) {
+        if (!name) return 0;
+        return instances.filter(it => it.providerName === name).length;
+    }
+
+    function renderProviders() {
+        const wrap = document.getElementById('provider-crumbs');
+        wrap.innerHTML = '';
+        if (!providers || providers.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'subtle';
+            empty.textContent = '暂无服务商，请先添加';
+            wrap.appendChild(empty);
+            return;
+        }
+
+        providers.forEach(p => {
+            const btn = document.createElement('div');
+            btn.className = 'crumb' + (p.id === selectedProviderId ? ' active' : '');
+            btn.textContent = p.name || '';
+            btn.onclick = () => { selectedProviderId = p.id; manageMode = false; selectedInstanceIds.clear(); renderProviders(); renderInstances(); };
+            btn.oncontextmenu = (e) => {
+                e.preventDefault();
+                contextProviderId = p.id;
+                openContextMenu(e.clientX, e.clientY);
+            };
+            wrap.appendChild(btn);
+        });
+    }
+
+    function openContextMenu(x, y) {
+        const menu = document.getElementById('provider-menu');
+        menu.style.display = 'block';
+        const pad = 8;
+        const maxX = window.innerWidth - menu.offsetWidth - pad;
+        const maxY = window.innerHeight - menu.offsetHeight - pad;
+        menu.style.left = Math.max(pad, Math.min(x, maxX)) + 'px';
+        menu.style.top = Math.max(pad, Math.min(y, maxY)) + 'px';
+    }
+
+    function closeContextMenu() {
+        const menu = document.getElementById('provider-menu');
+        menu.style.display = 'none';
+        contextProviderId = null;
+    }
+
+    document.addEventListener('click', () => closeContextMenu());
+    window.addEventListener('scroll', () => closeContextMenu());
+    window.addEventListener('resize', () => closeContextMenu());
+
+    function onContextEditProvider() {
+        if (!contextProviderId) return;
+        closeContextMenu();
+        openEditProvider(contextProviderId);
+    }
+
+    async function onContextDeleteProvider() {
+        if (!contextProviderId) return;
+        const id = contextProviderId;
+        closeContextMenu();
+        const provider = providers.find(p => p.id === id);
+        if (!confirm(`确认删除服务商 "${provider ? provider.name : id}"？\n（若该服务商下存在实例将拒绝删除）`)) return;
+        try {
+            const resp = await fetch(`/admin/providers/${id}`, { method: 'DELETE' });
+            const text = await resp.text();
+            if (!resp.ok) throw new Error(text || '删除失败');
+            if (text === 'has_instances') {
+                showError('删除失败：该服务商下仍有实例，请先删除实例');
+                return;
+            }
+            showSuccess('服务商已删除');
+            selectedProviderId = null;
+            await loadProviders();
+            await loadInstances();
+        } catch (e) {
+            showError('删除服务商失败: ' + (e && e.message ? e.message : String(e)));
+        }
+    }
+
+    function fillProviderSelect() {
+        const sel = document.getElementById('instance-provider');
+        sel.innerHTML = '';
+        providers.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.name;
+            opt.textContent = p.name;
+            sel.appendChild(opt);
+        });
+        sel.onchange = onInstanceProviderChange;
+    }
+
+    function onInstanceProviderChange() {
+        const sel = document.getElementById('instance-provider');
+        if (!sel) return;
+        updateInstanceConversionRulePreviewByProviderName(sel.value);
+    }
+
+    function renderInstances() {
+        const title = document.getElementById('instances-title');
+        const subtitle = document.getElementById('instances-subtitle');
+        const wrap = document.getElementById('instance-cards');
+        wrap.innerHTML = '';
+        wrap.className = 'cards';
+
+        const providerName = providerNameById(selectedProviderId);
+        if (!providerName) {
+            title.textContent = '实例列表';
+            subtitle.textContent = '请选择一个服务商';
+            document.getElementById('btn-manage').disabled = true;
+            document.getElementById('btn-batch-delete').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('btn-manage').disabled = false;
+        title.textContent = '实例列表';
+        const list = instances.filter(x => x.providerName === providerName);
+        subtitle.textContent = `共 ${list.length} 个实例`;
+
+        document.getElementById('btn-batch-delete').style.display = manageMode ? 'inline-flex' : 'none';
+        document.getElementById('btn-manage').textContent = manageMode ? '退出管理' : '管理';
+
+        if (list.length === 0) {
+            wrap.classList.add('empty');
+            const empty = document.createElement('div');
+            empty.className = 'empty-state';
+            empty.innerHTML = `
+                <div>暂无实例</div>
+                <div class="subtle" style="margin-top:4px;">在当前服务商下创建第一个实例</div>
+                <button class="btn btn-primary btn-sm" type="button" onclick="openCreateInstance()" style="margin-top:8px;">
+                    + 添加实例
+                </button>
+            `;
+            wrap.appendChild(empty);
+            return;
+        }
+
+        list.forEach(inst => {
+            const card = document.createElement('div');
+            card.className = 'card' + (manageMode ? ' manage' : '');
+            const active = inst.isActive !== false;
+            card.innerHTML = `
+                <div class="select-box"><input type="checkbox" ${selectedInstanceIds.has(inst.id) ? 'checked' : ''} /></div>
+                <div class="card-title">${escapeHtml(inst.modelName || '-')}</div>
+                <div class="mono">${escapeHtml(inst.url || '-')}</div>
+                <div class="tag-row">
+                    <span class="tag ${active ? 'ok' : 'bad'}">${active ? '启用' : '停用'}</span>
+                    <span class="tag">RPM ${inst.rpmLimit || '-'}</span>
+                    <span class="tag">TPM ${inst.tpmLimit || '-'}</span>
+                </div>
+            `;
+            card.onclick = (e) => {
+                if (manageMode) {
+                    toggleSelectInstance(inst.id);
+                    e.stopPropagation();
+                    return;
+                }
+                openEditInstance(inst.id);
+            };
+            const cb = card.querySelector('input[type="checkbox"]');
+            if (cb) {
+                cb.onclick = (e) => { e.stopPropagation(); toggleSelectInstance(inst.id); };
+            }
+            wrap.appendChild(card);
+        });
+    }
+
+    function toggleManage() {
+        manageMode = !manageMode;
+        if (!manageMode) {
+            selectedInstanceIds.clear();
+        }
+        renderInstances();
+    }
+
+    function toggleSelectInstance(id) {
+        if (selectedInstanceIds.has(id)) selectedInstanceIds.delete(id);
+        else selectedInstanceIds.add(id);
+        renderInstances();
+    }
+
+    async function batchDelete() {
+        if (selectedInstanceIds.size === 0) {
+            showError('请先选择要删除的实例');
+            return;
+        }
+        if (!confirm(`确认删除选中的 ${selectedInstanceIds.size} 个实例？`)) return;
+        try {
+            const ids = Array.from(selectedInstanceIds);
+            await Promise.all(ids.map(id => fetch(`/admin/instances/${id}`, { method: 'DELETE' })));
+            showSuccess('批量删除已提交');
+            selectedInstanceIds.clear();
+            manageMode = false;
+            await loadInstances();
+        } catch (e) {
+            showError('批量删除失败: ' + (e && e.message ? e.message : String(e)));
+        }
+    }
+
+    function openCreateProvider() {
+        editingProviderId = null;
+        document.getElementById('provider-modal-title').textContent = '新增服务商';
+        document.getElementById('provider-name').value = '';
+        document.getElementById('provider-desc').value = '';
+        document.getElementById('provider-request-rule').value = '';
+        document.getElementById('provider-response-rule').value = '';
+        openModal('provider-modal');
+    }
+
+    function openEditProvider(id) {
+        const p = providers.find(x => x.id === id);
+        if (!p) return;
+        editingProviderId = id;
+        document.getElementById('provider-modal-title').textContent = '编辑服务商';
+        document.getElementById('provider-name').value = p.name || '';
+        document.getElementById('provider-desc').value = p.description || '';
+        document.getElementById('provider-request-rule').value = p.requestConversionRule || '';
+        document.getElementById('provider-response-rule').value = p.responseConversionRule || '';
+        openModal('provider-modal');
+    }
+
+    function closeProviderModal() {
+        closeModal('provider-modal');
+        editingProviderId = null;
+    }
+
+    async function saveProvider() {
+        const name = document.getElementById('provider-name').value.trim();
+        const description = document.getElementById('provider-desc').value.trim();
+        const requestConversionRule = (document.getElementById('provider-request-rule').value || '').trim();
+        const responseConversionRule = (document.getElementById('provider-response-rule').value || '').trim();
+        if (!name) { showError('请填写服务商名称'); return; }
+        try {
+            const body = JSON.stringify({
+                name,
+                description,
+                requestConversionRule: requestConversionRule || null,
+                responseConversionRule: responseConversionRule || null
+            });
+            const resp = editingProviderId
+                ? await fetch(`/admin/providers/${editingProviderId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body })
+                : await fetch('/admin/providers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+            if (!resp.ok) throw new Error('保存失败');
+            showSuccess('服务商保存成功');
+            closeProviderModal();
+            await loadProviders();
+            await loadInstances();
+        } catch (e) {
+            showError('保存服务商失败: ' + (e && e.message ? e.message : String(e)));
+        }
+    }
+
+    function clearTestResult() {
+        const el = document.getElementById('test-result');
+        el.style.display = 'none';
+        el.textContent = '';
+    }
+
+    function openCreateInstance() {
+        editingInstanceId = null;
+        clearTestResult();
+        document.getElementById('instance-modal-title').textContent = '新增实例';
+        document.getElementById('instance-model').value = '';
+        document.getElementById('instance-url').value = '';
+        document.getElementById('instance-apiKey').value = '';
+        document.getElementById('instance-rpmLimit').value = '';
+        document.getElementById('instance-tpmLimit').value = '';
+        document.getElementById('instance-active').checked = true;
+        document.getElementById('instance-postModel').value = '';
+        document.getElementById('instance-rawEnabled').checked = false;
+        const reqPreview = document.getElementById('instance-requestRule-preview');
+        const respPreview = document.getElementById('instance-responseRule-preview');
+        if (reqPreview) reqPreview.value = '';
+        if (respPreview) respPreview.value = '';
+        document.getElementById('instance-testMessage').value = 'ping';
+
+        const providerName = providerNameById(selectedProviderId);
+        if (providerName) {
+            const sel = document.getElementById('instance-provider');
+            sel.value = providerName;
+            updateInstanceConversionRulePreviewByProviderName(providerName);
+        } else {
+            updateInstanceConversionRulePreviewByProviderName(null);
+        }
+        openModal('instance-modal');
+    }
+
+    function openEditInstance(id) {
+        const inst = instances.find(x => x.id === id);
+        if (!inst) return;
+        editingInstanceId = id;
+        clearTestResult();
+        document.getElementById('instance-modal-title').textContent = '编辑实例';
+        document.getElementById('instance-provider').value = inst.providerName || '';
+        document.getElementById('instance-model').value = inst.modelName || '';
+        document.getElementById('instance-url').value = inst.url || '';
+        document.getElementById('instance-apiKey').value = inst.apiKey || '';
+        document.getElementById('instance-rpmLimit').value = inst.rpmLimit || '';
+        document.getElementById('instance-tpmLimit').value = inst.tpmLimit || '';
+        document.getElementById('instance-active').checked = inst.isActive !== false;
+        document.getElementById('instance-postModel').value = inst.postModel || '';
+        document.getElementById('instance-rawEnabled').checked = !!inst.responseRawEnabled;
+        const reqPreview = document.getElementById('instance-requestRule-preview');
+        const respPreview = document.getElementById('instance-responseRule-preview');
+        if (reqPreview && respPreview) {
+            if (inst.requestConversionRule || inst.responseConversionRule) {
+                reqPreview.value = prettyJsonOrOriginal(inst.requestConversionRule || '');
+                respPreview.value = prettyJsonOrOriginal(inst.responseConversionRule || '');
+            } else {
+                updateInstanceConversionRulePreviewByProviderName(inst.providerName || '');
+            }
+        }
+        document.getElementById('instance-testMessage').value = 'ping';
+        openModal('instance-modal');
+    }
+
+    function closeInstanceModal() {
+        closeModal('instance-modal');
+        editingInstanceId = null;
+    }
+
+    function buildInstanceRequestPayload() {
+        const provider = document.getElementById('instance-provider').value.trim();
+        const model = document.getElementById('instance-model').value.trim();
+        const url = document.getElementById('instance-url').value.trim();
+        const apiKey = document.getElementById('instance-apiKey').value.trim();
+        const postModel = (document.getElementById('instance-postModel').value || '').trim();
+        const rpmLimit = document.getElementById('instance-rpmLimit').value;
+        const tpmLimit = document.getElementById('instance-tpmLimit').value;
+
+        return {
+            provider,
+            model,
+            url,
+            apiKey,
+            postModel: postModel || null,
+            rpmLimit: rpmLimit ? Number(rpmLimit) : null,
+            tpmLimit: tpmLimit ? Number(tpmLimit) : null,
+            responseRawEnabled: document.getElementById('instance-rawEnabled').checked
+        };
+    }
+
+    async function testConnection() {
+        clearTestResult();
+        const testMessage = (document.getElementById('instance-testMessage').value || 'ping').trim() || 'ping';
+        const out = document.getElementById('test-result');
+        out.style.display = 'block';
+        out.textContent = '测试中...';
+
+        try {
+            let resp;
+            if (editingInstanceId) {
+                resp = await fetch(`/admin/instances/${editingInstanceId}/test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ testMessage })
+                });
+            } else {
+                const instance = buildInstanceRequestPayload();
+                resp = await fetch('/admin/instances/test-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instance, testMessage })
+                });
+            }
+            const text = await resp.text();
+            out.textContent = text || '(空响应)';
+            if (!resp.ok) {
+                showError('测试连接失败');
+            } else {
+                showSuccess('测试连接完成');
+            }
+        } catch (e) {
+            out.textContent = '错误: ' + (e && e.message ? e.message : String(e));
+            showError('测试连接失败: ' + (e && e.message ? e.message : String(e)));
+        }
+    }
+
+    async function saveInstance() {
+        const payload = buildInstanceRequestPayload();
+        const active = document.getElementById('instance-active').checked ? 'true' : 'false';
+        if (!payload.provider || !payload.model || !payload.url || !payload.apiKey) {
+            showError('请填写 服务商 / 模型 / URL / API Key');
+            return;
+        }
+        try {
+            let resp;
+            if (editingInstanceId) {
+                resp = await fetch(`/admin/instances/${editingInstanceId}?active=${active}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                resp = await fetch('/admin/instances', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+            const text = await resp.text();
+            if (!resp.ok) throw new Error(text || '保存失败');
+            showSuccess('保存成功（已触发一次心跳）');
+            closeInstanceModal();
+            await loadInstances();
+        } catch (e) {
+            showError('保存实例失败: ' + (e && e.message ? e.message : String(e)));
+        }
+    }
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function scrollProviders(direction) {
+        const wrapper = document.getElementById('provider-scroll-wrapper');
+        if (!wrapper) return;
+        const amount = 260;
+        wrapper.scrollBy({ left: direction * amount, behavior: 'smooth' });
+    }
+
+    function initProviderScrollWheel() {
+        const wrapper = document.getElementById('provider-scroll-wrapper');
+        if (!wrapper) return;
+        wrapper.addEventListener('wheel', (event) => {
+            // 将上下滚动映射为左右滚动，便于在服务商很多时快速浏览
+            if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+                wrapper.scrollLeft += event.deltaY;
+                event.preventDefault();
+            }
+        }, { passive: false });
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            await loadInstances();
+            await loadProviders();
+            initProviderScrollWheel();
+        } catch (e) {
+            showError((e && e.message) ? e.message : String(e));
+        }
+    });
+</script>
+</body>
+</html>
+

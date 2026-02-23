@@ -1,9 +1,16 @@
 package com.mooncell.gateway.core.model;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mooncell.gateway.core.converter.RequestConverter;
+import com.mooncell.gateway.core.converter.ResponseConverter;
+import com.mooncell.gateway.core.converter.impl.SseResponseConverter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,6 +42,16 @@ public class ModelInstance {
     private String responseContentPath;
     private String responseSeqPath;
     private Boolean responseRawEnabled;
+    
+    /**
+     * 请求转换规则（JSON字符串），从服务商继承，用于将OpenAPI格式转换为服务商特定格式
+     */
+    private String requestConversionRule;
+    
+    /**
+     * 响应转换规则（JSON字符串），从服务商继承，用于将服务商SSE响应转换为OpenAPI格式
+     */
+    private String responseConversionRule;
     
     private Integer weight;   // 权重
     private Integer rpmLimit; // 每分钟请求上限
@@ -185,6 +202,8 @@ public class ModelInstance {
                 .responseContentPath(this.responseContentPath)
                 .responseSeqPath(this.responseSeqPath)
                 .responseRawEnabled(this.responseRawEnabled)
+                .requestConversionRule(this.requestConversionRule)
+                .responseConversionRule(this.responseConversionRule)
                 .weight(this.weight)
                 .rpmLimit(this.rpmLimit)
                 .tpmLimit(this.tpmLimit)
@@ -196,6 +215,90 @@ public class ModelInstance {
         copy.holdTimeoutSeconds = FIXED_HOLD_TIMEOUT_SECONDS;
         copy.forceRelease();
         return copy;
+    }
+
+    /**
+     * 将 OpenAPI 格式请求转换为实例特定格式
+     * 
+     * @param openApiRequest OpenAPI 格式请求（JsonNode）
+     * @param requestConverter 请求转换器（由 ConverterFactory 提供）
+     * @return 实例特定格式的请求体（ObjectNode，可直接用于 WebClient）
+     * @throws IllegalArgumentException 如果参数为 null
+     * @throws IllegalStateException 如果转换结果不是对象类型
+     */
+    public ObjectNode convertRequest(JsonNode openApiRequest, RequestConverter requestConverter) {
+        if (openApiRequest == null) {
+            throw new IllegalArgumentException("OpenAPI request cannot be null");
+        }
+        if (requestConverter == null) {
+            throw new IllegalArgumentException("Request converter cannot be null");
+        }
+        
+        JsonNode converted = requestConverter.convert(this, openApiRequest);
+        
+        // 确保返回 ObjectNode
+        if (converted instanceof ObjectNode) {
+            return (ObjectNode) converted;
+        } else if (converted != null && converted.isObject()) {
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode result = mapper.createObjectNode();
+            converted.fields().forEachRemaining(entry -> 
+                result.set(entry.getKey(), entry.getValue()));
+            return result;
+        } else {
+            throw new IllegalStateException("Converted request is not an object: " + 
+                (converted != null ? converted.getNodeType() : "null"));
+        }
+    }
+
+    /**
+     * 将实例响应转换为 OpenAPI SSE 格式
+     * 
+     * @param instanceResponse 实例原始响应（JsonNode）
+     * @param requestId 请求 ID（用于填充缺失字段）
+     * @param seqCounter 序号计数器（用于生成序号）
+     * @param responseConverter 响应转换器（由 ConverterFactory 提供）
+     * @return OpenAPI SSE 格式的响应列表（每个字符串是一个 SSE 数据块）
+     * @throws IllegalArgumentException 如果转换器为 null
+     */
+    public List<String> convertResponse(JsonNode instanceResponse, 
+                                       String requestId, 
+                                       AtomicInteger seqCounter,
+                                       ResponseConverter responseConverter) {
+        if (responseConverter == null) {
+            throw new IllegalArgumentException("Response converter cannot be null");
+        }
+        
+        if (instanceResponse == null) {
+            return List.of();
+        }
+        
+        return responseConverter.convert(this, instanceResponse, requestId, seqCounter);
+    }
+
+    /**
+     * 将 SSE 格式的实例响应转换为 OpenAPI SSE 格式
+     * 
+     * @param sseChunk SSE 格式的原始响应（可能包含多行）
+     * @param requestId 请求 ID（用于填充缺失字段）
+     * @param seqCounter 序号计数器（用于生成序号）
+     * @param sseResponseConverter SSE 响应转换器（由 ConverterFactory 提供）
+     * @return OpenAPI SSE 格式的响应列表（每个字符串是一个 SSE 数据块）
+     * @throws IllegalArgumentException 如果转换器为 null
+     */
+    public List<String> convertSseResponse(String sseChunk,
+                                         String requestId,
+                                         AtomicInteger seqCounter,
+                                         SseResponseConverter sseResponseConverter) {
+        if (sseResponseConverter == null) {
+            throw new IllegalArgumentException("SSE response converter cannot be null");
+        }
+        
+        if (sseChunk == null || sseChunk.isEmpty()) {
+            return List.of();
+        }
+        
+        return sseResponseConverter.convertSseChunk(sseChunk, this, requestId, seqCounter);
     }
 
 }

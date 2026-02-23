@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mooncell.gateway.api.ChatCompletionResponse;
 import com.mooncell.gateway.core.converter.ResponseConverter;
+import com.mooncell.gateway.core.converter.util.PathCache;
 import com.mooncell.gateway.core.model.ModelInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -152,13 +153,13 @@ public class OpenApiResponseConverter implements ResponseConverter {
     }
     
     /**
-     * 简单的点分路径解析器
+     * 简单的点分路径解析器（优化：使用路径缓存）
      */
     private JsonNode readNodeByPath(JsonNode root, String path) {
         if (root == null || path == null || path.isBlank()) {
             return null;
         }
-        String[] segments = path.split("\\.");
+        String[] segments = PathCache.splitPath(path);
         JsonNode current = root;
         for (String segment : segments) {
             if (current == null) {
@@ -179,7 +180,8 @@ public class OpenApiResponseConverter implements ResponseConverter {
     
     @Override
     public boolean supports(ModelInstance instance) {
-        // 默认支持所有实例
-        return true;
+        // 只有在没有配置响应转换规则时才支持，让 RuleBasedResponseConverter 优先
+        String ruleJson = instance.getResponseConversionRule();
+        return ruleJson == null || ruleJson.isBlank();
     }
 }

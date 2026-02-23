@@ -44,6 +44,8 @@ public class SseResponseConverter implements ResponseConverter {
     
     /**
      * 转换 SSE 数据块（包含多行）
+     * <p>
+     * 优化：使用字符数组操作替代 split()，减少临时对象创建
      *
      * @param chunk            下游返回的原始片段（可能包含多行 SSE）
      * @param instance         对应的模型实例
@@ -58,9 +60,11 @@ public class SseResponseConverter implements ResponseConverter {
             return outputs;
         }
         
+        // 优化：手动分割行，避免 split() 创建临时数组
+        List<String> lines = splitLines(chunk);
+        
         // Raw 模式：直接返回归一化后的原始行
         if (Boolean.TRUE.equals(instance.getResponseRawEnabled())) {
-            String[] lines = chunk.split("\n");
             for (String line : lines) {
                 String payload = normalizeSsePayload(line);
                 if (payload != null) {
@@ -71,7 +75,6 @@ public class SseResponseConverter implements ResponseConverter {
         }
         
         // 标准模式：转换为统一格式
-        String[] lines = chunk.split("\n");
         for (String line : lines) {
             String payload = normalizeSsePayload(line);
             if (payload == null) {
@@ -96,6 +99,42 @@ public class SseResponseConverter implements ResponseConverter {
         }
         
         return outputs;
+    }
+    
+    /**
+     * 分割字符串为行列表（优化：减少临时对象）
+     * <p>
+     * 使用 StringBuilder 和字符数组操作，避免 split() 创建临时数组
+     */
+    private List<String> splitLines(String text) {
+        List<String> lines = new ArrayList<>();
+        if (text == null || text.isEmpty()) {
+            return lines;
+        }
+        
+        int start = 0;
+        int len = text.length();
+        for (int i = 0; i < len; i++) {
+            char c = text.charAt(i);
+            if (c == '\n') {
+                if (i > start) {
+                    lines.add(text.substring(start, i));
+                } else {
+                    lines.add("");
+                }
+                start = i + 1;
+            }
+        }
+        
+        // 添加最后一行（如果没有以 \n 结尾）
+        if (start < len) {
+            lines.add(text.substring(start));
+        } else if (start == len && len > 0 && text.charAt(len - 1) == '\n') {
+            // 如果以 \n 结尾，添加空行
+            lines.add("");
+        }
+        
+        return lines;
     }
     
     /**

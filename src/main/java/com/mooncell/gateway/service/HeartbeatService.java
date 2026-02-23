@@ -1,6 +1,6 @@
 package com.mooncell.gateway.service;
 
-import com.mooncell.gateway.core.dao.ModelInstanceMapper;
+import com.mooncell.gateway.core.dao.InstanceStore;
 import com.mooncell.gateway.core.model.ModelInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class HeartbeatService {
-    private final ModelInstanceMapper modelMapper;
+    private final InstanceStore instanceStore;
     private final InstanceWebClientManager instanceWebClientManager;  // 使用实例专用 WebClient 管理器
     private final GatewayService gatewayService;
 
@@ -24,7 +24,7 @@ public class HeartbeatService {
      * 以便尽快探测恢复并更新实例状态。
      */
     public void checkHealth() {
-        List<ModelInstance> allInstances = modelMapper.findAll();
+        List<ModelInstance> allInstances = instanceStore.findAllInstances();
         allInstances.forEach(instance -> {
             if (!instance.isHealthy() || (System.currentTimeMillis() - instance.getLastUsedTime() > 60000)) {
                 performHeartbeat(instance);
@@ -60,6 +60,13 @@ public class HeartbeatService {
                             if (response.getStatusCode().is2xxSuccessful()) {
                                 log.info("Instance {} recovered.", instance.getUrl());
                                 instance.recordSuccess(0);
+                                // 如果配置中的 isActive 为 false，更新为 true
+                                // 因为实例能响应心跳，说明它是可用的
+                                if (!Boolean.TRUE.equals(instance.getIsActive())) {
+                                    instanceStore.updateStatus(instance.getId(), true);
+                                    instance.setIsActive(true);
+                                    log.info("Instance {} isActive updated to true after successful heartbeat.", instance.getUrl());
+                                }
                             } else {
                                 log.warn("Instance {} heartbeat failed: {}", instance.getUrl(), response.getStatusCode());
                             }

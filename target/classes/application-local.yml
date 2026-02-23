@@ -1,31 +1,3 @@
-spring:
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:8848
-        namespace: public
-        group: DEFAULT_GROUP
-
-  datasource:
-    url: jdbc:mysql://localhost:3306/mooncell?useSSL=false&serverTimezone=UTC&characterEncoding=utf-8
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: root
-
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      database: 0
-
-  # 注意：为避免在本地/CI 启动时自动建表或改动数据库，这里关闭 Spring Boot 的 SQL 初始化。
-  # 你可以手动在需要的时候执行 src/main/resources/sql/001_init_gateway.sql。
-  sql:
-    init:
-      mode: never
-      schema-locations: classpath:sql/001_init_gateway.sql
-      encoding: UTF-8
-
 logging:
   level:
     com.mooncell.gateway.core.dao: DEBUG

@@ -9,6 +9,7 @@ MoonCell-ModelHub is a Spring Boot/WebFlux gateway for routing chat requests to 
   - `TRADITIONAL`
   - `OBJECT_POOL`
 - Runtime strategy switch via admin settings API/UI
+- Flexible request/response conversion system with JSON-based rules
 - SSE response normalization and configurable field mapping
 - Redis-based idempotency guard
 
@@ -71,6 +72,49 @@ Key fields:
 - `sampleCount`: random-sampling size
 - `objectPoolCoreSize`: initial slot count per instance (OBJECT_POOL only)
 - `objectPoolMaxSize`: max slot count per instance (OBJECT_POOL only)
+
+## Request/Response Conversion
+
+The gateway supports flexible conversion between standard OpenAPI format and provider-specific formats through a rule-based converter system.
+
+### Conversion Rules
+
+Each model instance can be configured with JSON-based conversion rules:
+
+- **Request Conversion Rule** (`requestConversionRule`): Converts gateway requests to provider-specific format
+- **Response Conversion Rule** (`responseConversionRule`): Converts provider responses to standard OpenAPI format
+
+### Conversion Modes
+
+1. **Template Mode**: Use JSON templates with placeholders (e.g., `$model`, `$messages`, `$content`)
+2. **Mapping Mode**: Field mapping from source to target format using JSONPath
+
+### Example Configuration
+
+```json
+{
+  "requestConversionRule": {
+    "type": "template",
+    "template": {
+      "model": "$model",
+      "messages": "$messages",
+      "stream": "$stream"
+    }
+  },
+  "responseConversionRule": {
+    "type": "template",
+    "template": {
+      "id": "$requestId",
+      "choices": [{
+        "index": "$seq",
+        "delta": { "content": "$content" }
+      }]
+    }
+  }
+}
+```
+
+For detailed documentation, see [docs/CONVERTER_ARCHITECTURE.md](docs/CONVERTER_ARCHITECTURE.md).
 
 ## Notes
 

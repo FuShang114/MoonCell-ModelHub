@@ -667,6 +667,7 @@
             </div>
             <nav class="nav">
                 <a class="active" href="/config">监控大盘</a>
+                <a href="/admin/instances-ui">实例管理</a>
                 <a href="/admin/debug">调试台</a>
                 <a href="/settings">策略设置</a>
             </nav>
@@ -953,18 +954,6 @@
             </div>
             <div class="form-grid" style="margin-top: 12px;">
                 <div class="form-group">
-                    <label class="form-label">requestId 路径</label>
-                    <input class="input-sm" id="instance-requestIdPath" placeholder="id">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">content 路径</label>
-                    <input class="input-sm" id="instance-contentPath" placeholder="choices.0.delta.content">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">seq 路径</label>
-                    <input class="input-sm" id="instance-seqPath" placeholder="choices.0.index">
-                </div>
-                <div class="form-group">
                     <label class="form-label">原始输出</label>
                     <div class="checkbox-row">
                         <input type="checkbox" id="instance-rawEnabled">
@@ -972,9 +961,42 @@
                     </div>
                 </div>
             </div>
+            <!-- 调试界面 -->
+            <div style="margin-top: 24px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
+                <h4 style="margin-bottom: 12px; font-size: 0.95rem; font-weight: 600;">调试工具</h4>
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <button class="btn btn-outline" onclick="showRequestPreview()" style="font-size: 0.85rem;">查看请求格式</button>
+                    <button class="btn btn-outline" onclick="openTestModal()" style="font-size: 0.85rem;">发送测试消息</button>
+                </div>
+                <div id="request-preview" style="display: none; margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; max-height: 200px; overflow-y: auto;">
+                    <pre id="request-preview-content" style="margin: 0; white-space: pre-wrap; word-wrap: break-word;"></pre>
+                </div>
+            </div>
             <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
                 <button class="btn btn-ghost" onclick="closeInstanceModal()">取消</button>
                 <button class="btn btn-primary" onclick="saveInstance()">保存实例</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试消息模态框 -->
+    <div class="modal" id="test-modal" onclick="onModalBackdropClick(event, 'test-modal', closeTestModal)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>发送测试消息</h3>
+                <button class="modal-close" onclick="closeTestModal()">✕</button>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label class="form-label">测试消息内容</label>
+                <textarea id="test-message-input" class="input-sm" rows="3" placeholder="输入测试消息内容" style="width: 100%; font-family: inherit;">Hello, this is a test message</textarea>
+            </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                <button class="btn btn-primary" onclick="sendTestMessage()">发送测试</button>
+                <button class="btn btn-ghost" onclick="closeTestModal()">关闭</button>
+            </div>
+            <div id="test-response" style="display: none; margin-top: 16px; padding: 12px; background: #f9fafb; border-radius: 6px; max-height: 400px; overflow-y: auto;">
+                <h4 style="margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;">原始输出：</h4>
+                <pre id="test-response-content" style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem;"></pre>
             </div>
         </div>
     </div>
@@ -994,6 +1016,32 @@
                     <label class="form-label">描述</label>
                     <input class="input-sm" id="provider-desc" placeholder="服务商说明">
                 </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">请求转换规则 (JSON，可选)</label>
+                    <textarea
+                        class="input-sm"
+                        id="provider-request-rule"
+                        rows="4"
+                        placeholder='{"type":"template","template":{"model":"$model","messages":"$messages","stream":"$stream"}}'
+                        style="width: 100%; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem;"
+                    ></textarea>
+                    <p style="margin-top: 4px; font-size: 0.8rem; color: #6b7280;">
+                        留空表示暂不配置，请求将沿用默认 OpenAPI 模板或实例级请求体模板。
+                    </p>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">响应转换规则 (JSON，可选)</label>
+                    <textarea
+                        class="input-sm"
+                        id="provider-response-rule"
+                        rows="4"
+                        placeholder='{"type":"mapping","requestIdPath":"id","contentPath":"choices.0.delta.content","seqPath":"choices.0.index"}'
+                        style="width: 100%; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem;"
+                    ></textarea>
+                    <p style="margin-top: 4px; font-size: 0.8rem; color: #6b7280;">
+                        留空表示暂不配置，响应将按原有映射路径进行解析。
+                    </p>
+                </div>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
                 <button class="btn btn-ghost" onclick="closeProviderModal()">取消</button>
@@ -1011,6 +1059,7 @@
         let providers = [];
         let editingProviderId = null;
         const metricCharts = {};
+        let isFirstLoad = true; // 标记是否是首次加载
 
         function setBodyScrollLocked(locked) {
             document.body.classList.toggle('modal-open', locked);
@@ -1053,7 +1102,11 @@
         // 加载数据
         async function loadData() {
             try {
-                showLoading(true);
+                // 只在首次加载时显示 loading，后续自动刷新无缝更新
+                const shouldShowLoading = isFirstLoad;
+                if (shouldShowLoading) {
+                    showLoading(true);
+                }
                 hideMessages();
 
                 // 并行加载统计数据和实例数据
@@ -1076,13 +1129,15 @@
                 updateMetricCharts(monitorMetrics);
                 updateFailureReasons(monitorMetrics.failureReasons);
 
-                // 移除成功提示，静默刷新
-
             } catch (error) {
                 console.error('加载数据失败:', error);
                 showError('加载数据失败: ' + error.message);
             } finally {
-                showLoading(false);
+                // 只在首次加载时隐藏 loading，然后标记首次加载完成
+                if (isFirstLoad) {
+                    showLoading(false);
+                    isFirstLoad = false;
+                }
             }
         }
 
@@ -1361,7 +1416,10 @@
                     <td>${instance.isActive ? '是' : '否'}</td>
                     <td><div class="config-code">${escapeHtml(preview)}</div></td>
                     <td>
-                        <button class="btn btn-outline" onclick="openInstanceEditor(${instance.id})">编辑</button>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn btn-outline" onclick="openInstanceEditor(${instance.id})">编辑</button>
+                            <button class="btn btn-danger" onclick="deleteInstance(${instance.id})" style="font-size: 0.85rem; padding: 4px 8px;">删除</button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -1379,9 +1437,6 @@
                 tpmLimit: 600000,
                 isActive: true,
                 postModel: '',
-                responseRequestIdPath: 'id',
-                responseContentPath: 'choices.0.delta.content',
-                responseSeqPath: 'choices.0.index',
                 responseRawEnabled: false
             });
             document.getElementById('instance-modal-title').textContent = '新增实例';
@@ -1411,9 +1466,6 @@
             document.getElementById('instance-apiKey').value = instance.apiKey || '';
             document.getElementById('instance-rpmLimit').value = instance.rpmLimit || 600;
             document.getElementById('instance-tpmLimit').value = instance.tpmLimit || 600000;
-            document.getElementById('instance-requestIdPath').value = instance.responseRequestIdPath || 'id';
-            document.getElementById('instance-contentPath').value = instance.responseContentPath || 'choices.0.delta.content';
-            document.getElementById('instance-seqPath').value = instance.responseSeqPath || 'choices.0.index';
             document.getElementById('instance-rawEnabled').checked = instance.responseRawEnabled === true;
             document.getElementById('instance-active').checked = instance.isActive !== false;
 
@@ -1591,9 +1643,6 @@
                 rpmLimit: Number(document.getElementById('instance-rpmLimit').value || 600),
                 tpmLimit: Number(document.getElementById('instance-tpmLimit').value || 600000),
                 postModel: buildTemplateJson(),
-                responseRequestIdPath: document.getElementById('instance-requestIdPath').value.trim(),
-                responseContentPath: document.getElementById('instance-contentPath').value.trim(),
-                responseSeqPath: document.getElementById('instance-seqPath').value.trim(),
                 responseRawEnabled: document.getElementById('instance-rawEnabled').checked
             };
         }
@@ -1602,6 +1651,10 @@
             editingProviderId = null;
             document.getElementById('provider-name').value = '';
             document.getElementById('provider-desc').value = '';
+            const reqRuleEl = document.getElementById('provider-request-rule');
+            const respRuleEl = document.getElementById('provider-response-rule');
+            if (reqRuleEl) reqRuleEl.value = '';
+            if (respRuleEl) respRuleEl.value = '';
             document.getElementById('provider-modal-title').textContent = '新增服务商';
             openModal('provider-modal');
         }
@@ -1611,6 +1664,10 @@
             const provider = providers.find(item => item.id === providerId) || {};
             document.getElementById('provider-name').value = provider.name || '';
             document.getElementById('provider-desc').value = provider.description || '';
+            const reqRuleEl = document.getElementById('provider-request-rule');
+            const respRuleEl = document.getElementById('provider-response-rule');
+            if (reqRuleEl) reqRuleEl.value = provider.requestConversionRule || '';
+            if (respRuleEl) respRuleEl.value = provider.responseConversionRule || '';
             document.getElementById('provider-modal-title').textContent = '编辑服务商';
             openModal('provider-modal');
         }
@@ -1623,6 +1680,8 @@
         async function saveProvider() {
             const name = document.getElementById('provider-name').value.trim();
             const description = document.getElementById('provider-desc').value.trim();
+            const requestConversionRule = (document.getElementById('provider-request-rule').value || '').trim();
+            const responseConversionRule = (document.getElementById('provider-response-rule').value || '').trim();
             if (!name) {
                 showError('请填写服务商名称');
                 return;
@@ -1633,13 +1692,23 @@
                     response = await fetch(`/admin/providers/${editingProviderId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, description })
+                        body: JSON.stringify({
+                            name,
+                            description,
+                            requestConversionRule: requestConversionRule || null,
+                            responseConversionRule: responseConversionRule || null
+                        })
                     });
                 } else {
                     response = await fetch('/admin/providers', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, description })
+                        body: JSON.stringify({
+                            name,
+                            description,
+                            requestConversionRule: requestConversionRule || null,
+                            responseConversionRule: responseConversionRule || null
+                        })
                     });
                 }
                 if (!response.ok) {
@@ -1782,6 +1851,110 @@
             closeInstanceModal();
             closeProviderModal();
         });
+
+        // 显示请求格式预览
+        async function showRequestPreview() {
+            if (!editingInstanceId) {
+                showError('请先保存实例配置');
+                return;
+            }
+            try {
+                const response = await fetch(`/admin/instances/${editingInstanceId}/request-preview`);
+                const text = await response.text();
+                const previewDiv = document.getElementById('request-preview');
+                const previewContent = document.getElementById('request-preview-content');
+                if (response.ok) {
+                    try {
+                        const json = JSON.parse(text);
+                        previewContent.textContent = JSON.stringify(json, null, 2);
+                    } catch (e) {
+                        previewContent.textContent = text;
+                    }
+                    previewDiv.style.display = 'block';
+                } else {
+                    previewContent.textContent = '获取失败: ' + text;
+                    previewDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('获取请求格式预览失败:', error);
+                showError('获取请求格式预览失败: ' + error.message);
+            }
+        }
+
+        // 打开测试消息模态框
+        function openTestModal() {
+            if (!editingInstanceId) {
+                showError('请先保存实例配置');
+                return;
+            }
+            document.getElementById('test-message-input').value = 'Hello, this is a test message';
+            document.getElementById('test-response').style.display = 'none';
+            openModal('test-modal');
+        }
+
+        // 关闭测试消息模态框
+        function closeTestModal() {
+            closeModal('test-modal');
+        }
+
+        // 发送测试消息
+        async function sendTestMessage() {
+            if (!editingInstanceId) {
+                showError('请先保存实例配置');
+                return;
+            }
+            const testMessage = document.getElementById('test-message-input').value.trim();
+            if (!testMessage) {
+                showError('请输入测试消息内容');
+                return;
+            }
+            try {
+                const response = await fetch(`/admin/instances/${editingInstanceId}/test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ testMessage })
+                });
+                const text = await response.text();
+                const responseDiv = document.getElementById('test-response');
+                const responseContent = document.getElementById('test-response-content');
+                if (response.ok) {
+                    try {
+                        const json = JSON.parse(text);
+                        responseContent.textContent = JSON.stringify(json, null, 2);
+                    } catch (e) {
+                        responseContent.textContent = text;
+                    }
+                } else {
+                    responseContent.textContent = '测试失败: ' + text;
+                }
+                responseDiv.style.display = 'block';
+            } catch (error) {
+                console.error('发送测试消息失败:', error);
+                showError('发送测试消息失败: ' + error.message);
+            }
+        }
+
+        // 删除实例
+        async function deleteInstance(instanceId) {
+            if (!confirm('确定要删除这个实例吗？此操作不可恢复。')) {
+                return;
+            }
+            try {
+                const response = await fetch(`/admin/instances/${instanceId}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(text || '删除失败');
+                }
+                showSuccess('实例删除成功');
+                await loadConfigInstances();
+                await loadData();
+            } catch (error) {
+                console.error('删除实例失败:', error);
+                showError('删除实例失败: ' + error.message);
+            }
+        }
     </script>
 </body>
 </html>

@@ -9,6 +9,7 @@ import com.mooncell.gateway.dto.MonitorMetricsDto;
 import com.mooncell.gateway.dto.ProviderDto;
 import com.mooncell.gateway.dto.ProviderRequest;
 import com.mooncell.gateway.dto.StrategyStatusDto;
+import com.mooncell.gateway.dto.TestInstanceRequest;
 import com.mooncell.gateway.dto.UpdatePostModelRequest;
 import com.mooncell.gateway.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -143,6 +144,39 @@ public class AdminController {
     @PutMapping("/providers/{id}")
     public String updateProvider(@PathVariable("id") Long id, @RequestBody ProviderRequest request) {
         return adminService.updateProvider(id, request);
+    }
+
+    @Operation(summary = "删除服务商", description = "删除指定服务商（若有关联实例则拒绝）")
+    @DeleteMapping("/providers/{id}")
+    public String deleteProvider(@PathVariable("id") Long id) {
+        return adminService.deleteProvider(id);
+    }
+
+    @Operation(summary = "删除实例", description = "删除指定实例并刷新负载均衡列表")
+    @DeleteMapping("/instances/{id}")
+    public String deleteInstance(@PathVariable("id") Long id) {
+        return adminService.deleteInstance(id);
+    }
+
+    @Operation(summary = "测试实例", description = "向指定实例发送测试消息并返回原始响应")
+    @PostMapping("/instances/{id}/test")
+    public String testInstance(
+            @PathVariable("id") Long id,
+            @RequestBody TestInstanceRequest request
+    ) {
+        return adminService.testInstance(id, request.getTestMessage());
+    }
+
+    @Operation(summary = "测试实例配置（未保存）", description = "使用提交的实例配置直接发送测试消息，不落库")
+    @PostMapping("/instances/test-config")
+    public String testInstanceConfig(@RequestBody com.mooncell.gateway.dto.TestInstanceConfigRequest request) throws Exception {
+        return adminService.testInstanceConfig(request);
+    }
+
+    @Operation(summary = "获取实例请求格式预览", description = "根据实例配置生成请求体格式预览")
+    @GetMapping("/instances/{id}/request-preview")
+    public String getRequestPreview(@PathVariable("id") Long id) {
+        return adminService.getRequestPreview(id);
     }
 
     @Operation(summary = "获取负载均衡算法配置", description = "获取当前算法及相关参数")

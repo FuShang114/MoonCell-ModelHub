@@ -7,11 +7,6 @@ spring:
 server:
   port: 9061
 
-mybatis:
-  mapper-locations: classpath:mapper/*.xml
-  configuration:
-    map-underscore-to-camel-case: true
-
 springdoc:
   api-docs:
     enabled: true

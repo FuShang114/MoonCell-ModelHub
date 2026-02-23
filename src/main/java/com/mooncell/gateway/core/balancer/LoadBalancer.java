@@ -1,6 +1,6 @@
 package com.mooncell.gateway.core.balancer;
 
-import com.mooncell.gateway.core.dao.ModelInstanceMapper;
+import com.mooncell.gateway.core.dao.InstanceStore;
 import com.mooncell.gateway.core.model.ModelInstance;
 import com.mooncell.gateway.dto.StrategyStatusDto;
 import com.mooncell.gateway.service.InstanceWebClientManager;
@@ -53,7 +53,7 @@ public class LoadBalancer {
     /** 默认资源池键名 */
     private static final String DEFAULT_POOL_KEY = "default";
 
-    private final ModelInstanceMapper modelMapper;
+    private final InstanceStore instanceStore;
     private final LoadBalancingSettingsStore settingsStore;
     private final InstanceWebClientManager instanceWebClientManager;
     /** 运行时序列号生成器，用于创建唯一运行时 ID */
@@ -948,7 +948,7 @@ public class LoadBalancer {
      * 實例刷新與 RuntimeState 快照/恢復邏輯。
      *
      * <p>將實例列表刷新、狀態快照和恢復的職責集中在一處，避免 LoadBalancer 本身過於臃腫。
-     * 該類依賴外部的 {@link ModelInstanceMapper}、{@link StrategyRuntime} 列表和當前配置。
+     * 該類依賴外部的 {@link InstanceStore}、{@link StrategyRuntime} 列表和當前配置。
      */
     private class InstanceRefresher {
         /**
@@ -963,7 +963,7 @@ public class LoadBalancer {
          * </ol>
          */
         void refreshInstances() {
-            List<ModelInstance> instances = modelMapper.findAll();
+            List<ModelInstance> instances = instanceStore.findAllInstances();
             if (instances == null) {
                 instances = List.of();
             }

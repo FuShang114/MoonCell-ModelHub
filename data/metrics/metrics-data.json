@@ -1,9 +1,7 @@
 {
-  "totalRequests" : 1,
+  "totalRequests" : 0,
   "successRequests" : 0,
-  "failedRequests" : 1,
+  "failedRequests" : 0,
   "throughputTokens" : 0,
-  "failureReasonTotals" : {
-    "CLIENT_CANCELLED" : 1
-  }
+  "failureReasonTotals" : { }
 }

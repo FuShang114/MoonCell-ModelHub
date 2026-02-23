@@ -21,6 +21,17 @@ public class PageController {
         return "config";
     }
 
+    @GetMapping("/admin/instances-ui")
+    public String instancesPage(Model model) {
+        return "instances";
+    }
+
+    @GetMapping("/admin/providers-ui")
+    public String providersPage(Model model) {
+        // 为了兼容历史链接，将服务商管理与实例管理统一到同一页面
+        return "instances";
+    }
+
     /**
      * 调试页面
      * @param model 模型对象

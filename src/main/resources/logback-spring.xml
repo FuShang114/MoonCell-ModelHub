@@ -82,7 +82,6 @@
     <!-- 特定包的日志级别 -->
     <logger name="com.mooncell.gateway" level="INFO"/>
     <logger name="org.springframework" level="WARN"/>
-    <logger name="org.mybatis" level="WARN"/>
     <logger name="com.alibaba.nacos" level="WARN"/>
     
     <!-- 开发环境可以使用 DEBUG -->

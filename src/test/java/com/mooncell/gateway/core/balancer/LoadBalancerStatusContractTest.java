@@ -1,6 +1,6 @@
 package com.mooncell.gateway.core.balancer;
 
-import com.mooncell.gateway.core.dao.ModelInstanceMapper;
+import com.mooncell.gateway.core.dao.InstanceStore;
 import com.mooncell.gateway.core.model.ModelInstance;
 import com.mooncell.gateway.dto.StrategyStatusDto;
 import com.mooncell.gateway.service.InstanceWebClientManager;
@@ -18,11 +18,11 @@ class LoadBalancerStatusContractTest {
 
     @Test
     void shouldExposeExtendedStrategyStatusFields() {
-        ModelInstanceMapper mapper = mock(ModelInstanceMapper.class);
+        InstanceStore instanceStore = mock(InstanceStore.class);
         LoadBalancingSettingsStore store = mock(LoadBalancingSettingsStore.class);
         InstanceWebClientManager webClientManager = mock(InstanceWebClientManager.class);
         when(store.load()).thenReturn(Optional.empty());
-        when(mapper.findAll()).thenReturn(List.of(
+        when(instanceStore.listAllInstances()).thenReturn(List.of(
                 ModelInstance.builder()
                         .id(1L)
                         .providerName("p")
@@ -35,7 +35,7 @@ class LoadBalancerStatusContractTest {
                         .build()
         ));
 
-        LoadBalancer loadBalancer = new LoadBalancer(mapper, store, webClientManager);
+        LoadBalancer loadBalancer = new LoadBalancer(instanceStore, store, webClientManager);
         loadBalancer.init();
 
         List<StrategyStatusDto> statuses = loadBalancer.getStrategyStatuses();

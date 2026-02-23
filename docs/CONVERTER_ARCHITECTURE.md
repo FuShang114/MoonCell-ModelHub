@@ -44,16 +44,32 @@ boolean supports(ModelInstance instance);
 
 ### 3. 转换器实现
 
-#### OpenApiRequestConverter
+#### RuleBasedRequestConverter（推荐）
+基于 JSON 规则的请求转换器，支持灵活的转换配置：
+- **模板模式**：使用 JSON 模板，支持占位符（`$model`, `$messages` 等）
+- **映射模式**：字段映射，从网关请求中提取字段并映射到实例格式
+- **值转换**：支持自定义值转换规则（如数组转字符串等）
+- **优先级**：如果实例配置了 `requestConversionRule`，优先使用此转换器
+
+#### RuleBasedResponseConverter（推荐）
+基于 JSON 规则的响应转换器，支持灵活的转换配置：
+- **模板模式**：使用 JSON 模板，支持占位符（`$requestId`, `$content`, `$seq`, `$model` 等）
+- **映射模式**：字段映射，从实例响应中提取字段并映射到标准格式
+- **值转换**：支持自定义值转换规则
+- **优先级**：如果实例配置了 `responseConversionRule`，优先使用此转换器
+
+#### OpenApiRequestConverter（兼容）
 - **模板模式**：基于 `postModel` 模板转换（兼容现有逻辑）
 - **默认模式**：构建最小请求体
 - **占位符支持**：`$model`, `$messages`
 - **字段复制**：自动复制 `temperature`, `max_tokens` 等参数
+- **回退**：当没有配置转换规则时使用
 
-#### OpenApiResponseConverter
+#### OpenApiResponseConverter（兼容）
 - **Raw 模式**：直接返回原始响应
 - **路径映射模式**：使用 JSONPath 提取字段并转换为标准格式
 - **字段映射**：`responseRequestIdPath`, `responseContentPath`, `responseSeqPath`
+- **回退**：当没有配置转换规则时使用
 
 #### SseResponseConverter
 专门处理 SSE 流式响应：
@@ -95,10 +111,73 @@ List<String> outputs = sseResponseConverter.convertSseChunk(
 
 ### 实例配置字段
 
-#### 请求转换配置
+#### 请求转换配置（推荐使用规则模式）
+
+**基于规则的配置（推荐）**：
+- `requestConversionRule`: JSON 格式的转换规则，支持模板模式和映射模式
+
+示例（模板模式）：
+```json
+{
+  "type": "template",
+  "template": {
+    "model": "$model",
+    "messages": "$messages",
+    "stream": "$stream",
+    "temperature": "$temperature"
+  }
+}
+```
+
+示例（映射模式）：
+```json
+{
+  "type": "mapping",
+  "mapping": {
+    "model": "model",
+    "input": "messages",
+    "stream": "stream"
+  }
+}
+```
+
+**兼容配置（旧方式）**：
 - `postModel`: JSON 模板字符串，支持占位符 `$model` 和 `$messages`
 
-#### 响应转换配置
+#### 响应转换配置（推荐使用规则模式）
+
+**基于规则的配置（推荐）**：
+- `responseConversionRule`: JSON 格式的转换规则，支持模板模式和映射模式
+
+示例（模板模式）：
+```json
+{
+  "type": "template",
+  "template": {
+    "id": "$requestId",
+    "object": "$object",
+    "model": "$model",
+    "choices": [{
+      "index": "$seq",
+      "delta": {
+        "content": "$content"
+      }
+    }]
+  }
+}
+```
+
+示例（映射模式）：
+```json
+{
+  "type": "mapping",
+  "requestIdPath": "id",
+  "contentPath": "output.text",
+  "seqPath": "output.index"
+}
+```
+
+**兼容配置（旧方式）**：
 - `responseRawEnabled`: 是否启用原始输出模式
 - `responseRequestIdPath`: 响应 ID 的 JSONPath（如 `"id"`）
 - `responseContentPath`: 响应内容的 JSONPath（如 `"choices.0.delta.content"`）

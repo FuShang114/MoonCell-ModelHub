@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonCell Gateway 服务商管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fb;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+        .app { display: flex; min-height: 100vh; }
+        .sidebar { width: 220px; background: #111827; color: #e5e7eb; padding: 20px 16px; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1rem; margin-bottom: 28px; }
+        .brand-badge {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700;
+        }
+        .nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav a { color: #e5e7eb; text-decoration: none; padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; }
+        .nav a.active, .nav a:hover { background: rgba(59, 130, 246, 0.2); color: #fff; }
+
+        .content { flex: 1; padding: 24px 28px 36px; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 12px; }
+        .title-group h1 { font-size: 1.6rem; margin-bottom: 4px; }
+        .title-group p { color: #6b7280; font-size: 0.9rem; }
+
+        .btn {
+            padding: 0.6rem 1.1rem;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #fff;
+            color: #1f2937;
+        }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-ghost { background: #fff; color: #1f2937; border: 1px solid #e5e7eb; }
+        .btn-ghost:hover { border-color: #cbd5f5; color: #1d4ed8; }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-sm { padding: 0.45rem 0.8rem; border-radius: 8px; font-size: 0.82rem; }
+
+        .panel { background: #fff; border-radius: 14px; border: 1px solid #eef1f7; padding: 16px; }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #eef1f7;
+        }
+        .table th, .table td { padding: 12px 12px; border-bottom: 1px solid #eef1f7; text-align: left; vertical-align: top; }
+        .table th { background: #f9fafb; color: #6b7280; font-size: 0.85rem; font-weight: 650; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; color: #374151; white-space: pre-wrap; word-break: break-word; }
+        .subtle { color: #6b7280; font-size: 0.85rem; }
+
+        .error-message, .success-message {
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: none;
+            border: 1px solid transparent;
+        }
+        .error-message { background-color: #fef2f2; border-color: #fecaca; color: #dc2626; }
+        .success-message { background-color: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0; top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.45);
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px;
+            width: 100%;
+            max-width: 860px;
+            position: relative;
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .modal-header h3 { font-size: 1.1rem; }
+        .modal-close {
+            background: #f3f4f6;
+            border: none;
+            border-radius: 10px;
+            width: 34px;
+            height: 34px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #6b7280;
+        }
+        .modal-close:hover { background: #e5e7eb; color: #374151; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            align-items: start;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 0.85rem; font-weight: 650; color: #374151; }
+        .input-sm, textarea.input-sm {
+            width: 100%;
+            padding: 0.55rem 0.7rem;
+            border: 1px solid #dbe1f2;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: #fff;
+        }
+        textarea.input-sm { resize: vertical; min-height: 90px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+        @media (max-width: 900px) {
+            .app { flex-direction: column; }
+            .sidebar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+            .nav { flex-direction: row; flex-wrap: wrap; }
+        }
+        @media (max-width: 780px) {
+            .content { padding: 18px; }
+            .topbar { flex-direction: column; align-items: flex-start; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-badge">MC</span>
+            MoonCell Gateway
+        </div>
+        <nav class="nav">
+            <a href="/config">监控大盘</a>
+            <a href="/admin/instances-ui">实例管理</a>
+            <a class="active" href="/admin/providers-ui">服务商管理</a>
+            <a href="/admin/debug">调试台</a>
+            <a href="/settings">策略设置</a>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <div class="topbar">
+            <div class="title-group">
+                <h1>服务商管理</h1>
+                <p>维护服务商信息与转换规则。删除时若存在关联实例将拒绝。</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <a class="btn btn-ghost" href="/admin/instances-ui">实例管理</a>
+                <a class="btn btn-ghost" href="/config">返回监控</a>
+            </div>
+        </div>
+
+        <div class="error-message" id="error-message"></div>
+        <div class="success-message" id="success-message"></div>
+
+        <section class="panel">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                <div>
+                    <div style="font-weight:700;">服务商列表</div>
+                    <div class="subtle">右上角添加，表格中可编辑/删除。</div>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="openCreateProvider()">+ 添加服务商</button>
+                    <button class="btn btn-ghost" onclick="loadProviders()">刷新</button>
+                </div>
+            </div>
+
+            <table class="table">
+                <thead>
+                <tr>
+                    <th style="width: 16%;">名称</th>
+                    <th style="width: 18%;">描述</th>
+                    <th>请求转换规则</th>
+                    <th>响应转换规则</th>
+                    <th style="width: 14%;">操作</th>
+                </tr>
+                </thead>
+                <tbody id="provider-tbody">
+                <tr><td colspan="5" class="subtle" style="padding: 16px;">正在加载...</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+
+<div class="modal" id="provider-modal" onclick="onModalBackdropClick(event, 'provider-modal', closeProviderModal)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3 id="provider-modal-title">新增服务商</h3>
+            <button class="modal-close" onclick="closeProviderModal()">✕</button>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">服务商名称</label>
+                <input class="input-sm" id="provider-name" placeholder="openai / azure / ark">
+            </div>
+            <div class="form-group">
+                <label class="form-label">描述</label>
+                <input class="input-sm" id="provider-desc" placeholder="服务商说明">
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">请求转换规则 (JSON，可选)</label>
+                <textarea class="input-sm" id="provider-request-rule" rows="4"
+                          placeholder='{"type":"template","template":{"model":"$model","messages":"$messages","stream":"$stream"}}'></textarea>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">响应转换规则 (JSON，可选)</label>
+                <textarea class="input-sm" id="provider-response-rule" rows="4"
+                          placeholder='{"type":"mapping","requestIdPath":"id","contentPath":"choices.0.delta.content","seqPath":"choices.0.index"}'></textarea>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeProviderModal()">取消</button>
+            <button class="btn btn-primary" onclick="saveProvider()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let providers = [];
+    let editingProviderId = null;
+
+    function showError(message) {
+        const el = document.getElementById('error-message');
+        el.textContent = message;
+        el.style.display = 'block';
+        document.getElementById('success-message').style.display = 'none';
+        setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    function showSuccess(message) {
+        const el = document.getElementById('success-message');
+        el.textContent = message;
+        el.style.display = 'block';
+        document.getElementById('error-message').style.display = 'none';
+        setTimeout(() => { el.style.display = 'none'; }, 3500);
+    }
+
+    function onModalBackdropClick(event, modalId, closeFn) {
+        if (event.target && event.target.id === modalId) closeFn();
+    }
+
+    function openModal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    async function loadProviders() {
+        try {
+            const resp = await fetch('/admin/providers');
+            if (!resp.ok) throw new Error('加载服务商失败');
+            providers = await resp.json();
+            renderProviders();
+        } catch (e) {
+            showError((e && e.message) ? e.message : String(e));
+        }
+    }
+
+    function renderProviders() {
+        const tbody = document.getElementById('provider-tbody');
+        tbody.innerHTML = '';
+        if (!providers || providers.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="subtle" style="padding: 16px;">暂无服务商</td></tr>`;
+            return;
+        }
+        providers.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight:700;">${escapeHtml(p.name || '')}</td>
+                <td class="subtle">${escapeHtml(p.description || '')}</td>
+                <td class="mono">${escapeHtml(p.requestConversionRule || '')}</td>
+                <td class="mono">${escapeHtml(p.responseConversionRule || '')}</td>
+                <td>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-ghost btn-sm" onclick="openEditProvider(${p.id})">编辑</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteProvider(${p.id})">删除</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openCreateProvider() {
+        editingProviderId = null;
+        document.getElementById('provider-modal-title').textContent = '新增服务商';
+        document.getElementById('provider-name').value = '';
+        document.getElementById('provider-desc').value = '';
+        document.getElementById('provider-request-rule').value = '';
+        document.getElementById('provider-response-rule').value = '';
+        openModal('provider-modal');
+    }
+
+    function openEditProvider(id) {
+        const p = providers.find(x => x.id === id);
+        if (!p) return;
+        editingProviderId = id;
+        document.getElementById('provider-modal-title').textContent = '编辑服务商';
+        document.getElementById('provider-name').value = p.name || '';
+        document.getElementById('provider-desc').value = p.description || '';
+        document.getElementById('provider-request-rule').value = p.requestConversionRule || '';
+        document.getElementById('provider-response-rule').value = p.responseConversionRule || '';
+        openModal('provider-modal');
+    }
+
+    function closeProviderModal() {
+        closeModal('provider-modal');
+        editingProviderId = null;
+    }
+
+    async function saveProvider() {
+        const name = document.getElementById('provider-name').value.trim();
+        const description = document.getElementById('provider-desc').value.trim();
+        const requestConversionRule = (document.getElementById('provider-request-rule').value || '').trim();
+        const responseConversionRule = (document.getElementById('provider-response-rule').value || '').trim();
+        if (!name) { showError('请填写服务商名称'); return; }
+        try {
+            const body = JSON.stringify({
+                name,
+                description,
+                requestConversionRule: requestConversionRule || null,
+                responseConversionRule: responseConversionRule || null
+            });
+            const resp = editingProviderId
+                ? await fetch(`/admin/providers/${editingProviderId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body })
+                : await fetch('/admin/providers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+            if (!resp.ok) throw new Error('保存失败');
+            showSuccess('服务商保存成功');
+            closeProviderModal();
+            await loadProviders();
+        } catch (e) {
+            showError('保存服务商失败: ' + ((e && e.message) ? e.message : String(e)));
+        }
+    }
+
+    async function deleteProvider(id) {
+        const p = providers.find(x => x.id === id);
+        if (!confirm(`确认删除服务商 "${p ? p.name : id}"？\n（若存在关联实例将拒绝删除）`)) return;
+        try {
+            const resp = await fetch(`/admin/providers/${id}`, { method: 'DELETE' });
+            const text = await resp.text();
+            if (!resp.ok) throw new Error(text || '删除失败');
+            if (text === 'has_instances') {
+                showError('删除失败：该服务商下仍有实例，请先删除实例');
+                return;
+            }
+            showSuccess('服务商已删除');
+            await loadProviders();
+        } catch (e) {
+            showError('删除服务商失败: ' + ((e && e.message) ? e.message : String(e)));
+        }
+    }
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProviders();
+    });
+</script>
+</body>
+</html>
+

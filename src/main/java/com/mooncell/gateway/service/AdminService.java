@@ -3,8 +3,10 @@ package com.mooncell.gateway.service;
 import com.mooncell.gateway.core.balancer.LoadBalancer;
 import com.mooncell.gateway.core.balancer.LoadBalancingAlgorithm;
 import com.mooncell.gateway.core.balancer.LoadBalancingSettings;
-import com.mooncell.gateway.core.dao.ModelInstanceMapper;
+import com.mooncell.gateway.core.dao.InstanceStore;
 import com.mooncell.gateway.core.model.ModelInstance;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mooncell.gateway.dto.AddInstanceRequest;
 import com.mooncell.gateway.dto.HealthyInstanceDto;
 import com.mooncell.gateway.dto.InstanceConfigDto;
@@ -14,11 +16,17 @@ import com.mooncell.gateway.dto.MonitorMetricsDto;
 import com.mooncell.gateway.dto.ProviderDto;
 import com.mooncell.gateway.dto.ProviderRequest;
 import com.mooncell.gateway.dto.StrategyStatusDto;
+import com.mooncell.gateway.service.GatewayService;
+import com.mooncell.gateway.service.InstanceWebClientManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,9 +34,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class AdminService {
-    private final ModelInstanceMapper mapper;
+    private final InstanceStore instanceStore;
     private final LoadBalancer loadBalancer;
     private final MonitoringMetricsService monitoringMetricsService;
+    private final GatewayService gatewayService;
+    private final InstanceWebClientManager instanceWebClientManager;
+    private final ObjectMapper objectMapper;
+    private final HeartbeatService heartbeatService;
     // RestartCoordinator 和持久化仅用于手工重启场景；线上接口改为纯热切换后不再通过这里触发进程退出。
 
     public List<HealthyInstanceDto> getHealthyInstances() {
@@ -62,13 +74,18 @@ public class AdminService {
 
     public String addInstance(AddInstanceRequest request) throws Exception {
         // 1. 获取 providerId
-        Long providerId = mapper.findProviderIdByName(request.getProvider());
+        Long providerId = instanceStore.findProviderIdByName(request.getProvider());
         if (providerId == null) {
             log.error("非法服务商:{}大模型：{}", request.getProvider(), request.getModel());
             throw new Exception("非法服务商");
         }
 
-        // 2. 插入 DB
+        // 2. 获取服务商信息，继承转换规则
+        var providerRecord = instanceStore.findProviderById(providerId);
+        String requestConversionRule = providerRecord != null ? providerRecord.requestConversionRule() : null;
+        String responseConversionRule = providerRecord != null ? providerRecord.responseConversionRule() : null;
+        
+        // 3. 插入 DB
         ModelInstance instance = ModelInstance.builder()
                 .providerId(providerId)
                 .modelName(request.getModel())
@@ -79,6 +96,8 @@ public class AdminService {
                 .responseContentPath(request.getResponseContentPath())
                 .responseSeqPath(request.getResponseSeqPath())
                 .responseRawEnabled(request.getResponseRawEnabled())
+                .requestConversionRule(requestConversionRule)
+                .responseConversionRule(responseConversionRule)
                 .weight(10)
                 .rpmLimit(request.getRpmLimit() != null ? request.getRpmLimit() : 600)
                 .tpmLimit(request.getTpmLimit() != null ? request.getTpmLimit() : 600000)
@@ -87,20 +106,27 @@ public class AdminService {
                 .build();
 
         try {
-            mapper.insert(instance);
-        } catch (DataIntegrityViolationException e) {
+            instanceStore.insertInstance(instance);
+        } catch (IllegalStateException e) {
             log.error("新增实例失败，可能是 URL 唯一约束冲突: {}", request.getUrl(), e);
-            throw new Exception("新增失败：URL 已存在（当前库约束为 URL 唯一）。若需同 URL 多实例，请先调整数据库唯一键。");
+            throw new Exception("新增失败：URL 已存在（当前配置约束为 URL 唯一）。若需同 URL 多实例，请先调整存储实现。");
         }
 
-        // 3. 同步更新LoadBalancer缓存
+        // 4. 同步更新LoadBalancer缓存
         loadBalancer.refreshInstances();
+
+        // 5. 保存后触发一次心跳，尽快探测可用性（异步）
+        try {
+            heartbeatService.performHeartbeat(instance);
+        } catch (Exception e) {
+            log.warn("Trigger heartbeat after addInstance failed: {}", e.getMessage());
+        }
 
         return "Instance added and cache refreshed for model: " + request.getModel();
     }
 
     public List<InstanceConfigDto> getInstances() {
-        List<ModelInstance> allInstances = mapper.findAll();
+        List<ModelInstance> allInstances = instanceStore.findAllInstances();
         return allInstances.stream()
                 .map(instance -> new InstanceConfigDto(
                         instance.getId(),
@@ -121,8 +147,13 @@ public class AdminService {
     }
 
     public String updatePostModel(Long id, String postModel) {
-        int updated = mapper.updatePostModel(id, postModel);
-        if (updated > 0) {
+        ModelInstance existing = instanceStore.findById(id);
+        if (existing == null) {
+            return "not_found";
+        }
+        existing.setPostModel(postModel);
+        boolean ok = instanceStore.updateInstance(existing);
+        if (ok) {
             loadBalancer.refreshInstances();
             return "success";
         }
@@ -130,36 +161,59 @@ public class AdminService {
     }
 
     public String updateInstance(Long id, AddInstanceRequest request, Boolean isActive) throws Exception {
-        Long providerId = mapper.findProviderIdByName(request.getProvider());
+        Long providerId = instanceStore.findProviderIdByName(request.getProvider());
         if (providerId == null) {
             log.error("非法服务商:{}大模型：{}", request.getProvider(), request.getModel());
             throw new Exception("非法服务商");
         }
-        int updated = mapper.updateInstance(
-                id,
-                providerId,
-                request.getModel(),
-                request.getUrl(),
-                request.getApiKey(),
-                request.getPostModel(),
-                request.getResponseRequestIdPath(),
-                request.getResponseContentPath(),
-                request.getResponseSeqPath(),
-                request.getResponseRawEnabled(),
-                request.getRpmLimit() != null ? request.getRpmLimit() : 600,
-                request.getTpmLimit() != null ? request.getTpmLimit() : 600000,
-                request.getMaxQps() != null ? request.getMaxQps() : 10,
-                isActive != null ? isActive : true
-        );
-        if (updated > 0) {
+        ModelInstance existing = instanceStore.findById(id);
+        if (existing == null) {
+            return "not_found";
+        }
+        
+        // 获取服务商信息，继承转换规则
+        var providerRecord = instanceStore.findProviderById(providerId);
+        String requestConversionRule = providerRecord != null ? providerRecord.requestConversionRule() : existing.getRequestConversionRule();
+        String responseConversionRule = providerRecord != null ? providerRecord.responseConversionRule() : existing.getResponseConversionRule();
+        
+        ModelInstance updated = ModelInstance.builder()
+                .id(id)
+                .providerId(providerId)
+                .providerName(request.getProvider())
+                .modelName(request.getModel())
+                .url(request.getUrl())
+                .apiKey(request.getApiKey())
+                .postModel(request.getPostModel())
+                .responseRequestIdPath(request.getResponseRequestIdPath())
+                .responseContentPath(request.getResponseContentPath())
+                .responseSeqPath(request.getResponseSeqPath())
+                .responseRawEnabled(request.getResponseRawEnabled())
+                .requestConversionRule(requestConversionRule)
+                .responseConversionRule(responseConversionRule)
+                .rpmLimit(request.getRpmLimit() != null ? request.getRpmLimit() : 600)
+                .tpmLimit(request.getTpmLimit() != null ? request.getTpmLimit() : 600000)
+                .maxQps(request.getMaxQps() != null ? request.getMaxQps() : 10)
+                .isActive(isActive != null ? isActive : true)
+                .build();
+        boolean ok = instanceStore.updateInstance(updated);
+        if (ok) {
             loadBalancer.refreshInstances();
+            // 保存后触发一次心跳，尽快探测可用性（异步）
+            try {
+                ModelInstance latest = instanceStore.findById(id);
+                if (latest != null) {
+                    heartbeatService.performHeartbeat(latest);
+                }
+            } catch (Exception e) {
+                log.warn("Trigger heartbeat after updateInstance failed: {}", e.getMessage());
+            }
             return "success";
         }
         return "not_found";
     }
 
     public List<ProviderDto> getProviders() {
-        return mapper.findAllProviders();
+        return instanceStore.findAllProviders();
     }
 
     public LoadBalancingSettingsDto getLoadBalancingSettings() {
@@ -310,13 +364,158 @@ public class AdminService {
     }
 
     public String addProvider(ProviderRequest request) {
-        mapper.insertProvider(request.getName(), request.getDescription());
+        instanceStore.insertProvider(request.getName(), request.getDescription(),
+                                    request.getRequestConversionRule(), request.getResponseConversionRule());
         return "success";
     }
 
     public String updateProvider(Long id, ProviderRequest request) {
-        int updated = mapper.updateProvider(id, request.getName(), request.getDescription());
-        return updated > 0 ? "success" : "not_found";
+        boolean updated = instanceStore.updateProvider(id, request.getName(), request.getDescription(),
+                                                      request.getRequestConversionRule(), request.getResponseConversionRule());
+        return updated ? "success" : "not_found";
+    }
+
+    public String deleteProvider(Long id) {
+        return instanceStore.deleteProvider(id);
+    }
+
+    public String deleteInstance(Long id) {
+        log.info("删除实例: {}", id);
+        boolean deleted = instanceStore.deleteInstance(id);
+        if (deleted) {
+            // 刷新负载均衡列表
+            loadBalancer.refreshInstances();
+            return "success";
+        }
+        return "not_found";
+    }
+
+    public String testInstance(Long id, String testMessage) {
+        log.info("测试实例: {}, 消息: {}", id, testMessage);
+        ModelInstance instance = instanceStore.findById(id);
+        
+        if (instance == null) {
+            return "{\"error\": \"实例不存在\"}";
+        }
+        
+        try {
+            // 构建测试请求体
+            ObjectNode testRequest = objectMapper.createObjectNode();
+            testRequest.put("model", instance.getModelName());
+            testRequest.put("message", testMessage != null ? testMessage : "test");
+            testRequest.put("stream", false); // 非流式，便于获取完整响应
+            
+            // 使用GatewayService构建实际请求体
+            ObjectNode payload = gatewayService.buildPayload(instance, testMessage != null ? testMessage : "test");
+            
+            // 发送请求
+            WebClient instanceWebClient = instanceWebClientManager.getWebClient(instance);
+            String response = instanceWebClient.post()
+                    .uri(instance.getUrl())
+                    .headers(headers -> {
+                        headers.setBearerAuth(instance.getApiKey());
+                        if ("azure".equalsIgnoreCase(instance.getProviderName())) {
+                            headers.set("api-key", instance.getApiKey());
+                        }
+                        headers.setContentType(MediaType.APPLICATION_JSON);
+                    })
+                    .bodyValue(payload)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(30))
+                    .block();
+            
+            return response != null ? response : "{\"error\": \"响应为空\"}";
+        } catch (Exception e) {
+            log.error("测试实例失败: {}", id, e);
+            return "{\"error\": \"" + e.getMessage() + "\"}";
+        }
+    }
+
+    public String testInstanceConfig(com.mooncell.gateway.dto.TestInstanceConfigRequest request) throws Exception {
+        if (request == null || request.getInstance() == null) {
+            return "{\"error\": \"参数不能为空\"}";
+        }
+        AddInstanceRequest cfg = request.getInstance();
+        String testMessage = request.getTestMessage() != null ? request.getTestMessage() : "ping";
+
+        Long providerId = instanceStore.findProviderIdByName(cfg.getProvider());
+        if (providerId == null) {
+            throw new Exception("非法服务商");
+        }
+        var providerRecord = instanceStore.findProviderById(providerId);
+        String requestConversionRule = providerRecord != null ? providerRecord.requestConversionRule() : null;
+        String responseConversionRule = providerRecord != null ? providerRecord.responseConversionRule() : null;
+
+        // 构建一个临时实例对象（不落库）
+        ModelInstance temp = ModelInstance.builder()
+                .id(-1L) // 仅用于构造；不使用 InstanceWebClientManager 缓存
+                .providerId(providerId)
+                .providerName(cfg.getProvider())
+                .modelName(cfg.getModel())
+                .url(cfg.getUrl())
+                .apiKey(cfg.getApiKey())
+                .postModel(cfg.getPostModel())
+                .responseRequestIdPath(cfg.getResponseRequestIdPath())
+                .responseContentPath(cfg.getResponseContentPath())
+                .responseSeqPath(cfg.getResponseSeqPath())
+                .responseRawEnabled(cfg.getResponseRawEnabled())
+                .requestConversionRule(requestConversionRule)
+                .responseConversionRule(responseConversionRule)
+                .rpmLimit(cfg.getRpmLimit() != null ? cfg.getRpmLimit() : 600)
+                .tpmLimit(cfg.getTpmLimit() != null ? cfg.getTpmLimit() : 600000)
+                .maxQps(cfg.getMaxQps() != null ? cfg.getMaxQps() : 10)
+                .isActive(true)
+                .build();
+
+        try {
+            ObjectNode payload = gatewayService.buildPayload(temp, testMessage);
+
+            // 未保存配置不走 InstanceWebClientManager（其要求 instanceId 非空且用于缓存/连接池）
+            HttpClient httpClient = HttpClient.create()
+                    .option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                    .responseTimeout(Duration.ofSeconds(60));
+            WebClient webClient = WebClient.builder()
+                    .clientConnector(new org.springframework.http.client.reactive.ReactorClientHttpConnector(httpClient))
+                    .build();
+
+            String response = webClient.post()
+                    .uri(temp.getUrl())
+                    .headers(headers -> {
+                        headers.setBearerAuth(temp.getApiKey());
+                        if ("azure".equalsIgnoreCase(temp.getProviderName())) {
+                            headers.set("api-key", temp.getApiKey());
+                        }
+                        headers.setContentType(MediaType.APPLICATION_JSON);
+                    })
+                    .bodyValue(payload)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(30))
+                    .block();
+            return response != null ? response : "{\"error\": \"响应为空\"}";
+        } catch (Exception e) {
+            log.error("测试实例配置失败", e);
+            return "{\"error\": \"" + e.getMessage() + "\"}";
+        }
+    }
+
+    public String getRequestPreview(Long id) {
+        log.info("获取实例请求格式预览: {}", id);
+        ModelInstance instance = instanceStore.findById(id);
+        
+        if (instance == null) {
+            return "{\"error\": \"实例不存在\"}";
+        }
+        
+        try {
+            // 构建示例请求体
+            ObjectNode payload = gatewayService.buildPayload(instance, "示例消息");
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(payload);
+        } catch (Exception e) {
+            log.error("获取请求格式预览失败: {}", id, e);
+            return "{\"error\": \"" + e.getMessage() + "\"}";
+        }
     }
 
     private HealthyInstanceDto convertToHealthyDto(ModelInstance instance) {

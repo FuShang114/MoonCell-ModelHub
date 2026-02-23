@@ -1,0 +1,126 @@
+{
+  "providerSeq" : 20,
+  "instanceSeq" : 0,
+  "providers" : [ {
+    "id" : 1,
+    "name" : "bytedance",
+    "description" : "字节跳动豆包",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"input\":\"$messages\",\"stream\":\"$stream\",\"parameters\":{\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"item_id\",\"contentPath\":\"delta.text\",\"seqPath\":\"sequence_number\"}"
+  }, {
+    "id" : 2,
+    "name" : "Alibaba",
+    "description" : "阿里云通义千问",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"input\":{\"messages\":\"$messages\"},\"stream\":\"$stream\",\"parameters\":{\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"request_id\",\"contentPath\":\"output.choices.0.message.content\",\"seqPath\":\"output.choices.0.index\"}"
+  }, {
+    "id" : 3,
+    "name" : "OpenAI",
+    "description" : "OpenAI (标准OpenAPI格式)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\",\"top_p\":\"$top_p\",\"frequency_penalty\":\"$frequency_penalty\",\"presence_penalty\":\"$presence_penalty\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 4,
+    "name" : "Anthropic",
+    "description" : "Anthropic Claude",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"max_tokens\":\"$max_tokens\",\"temperature\":\"$temperature\",\"top_p\":\"$top_p\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"delta.text\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 5,
+    "name" : "Google",
+    "description" : "Google Gemini",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"contents\":\"$messages\",\"generationConfig\":{\"temperature\":\"$temperature\",\"maxOutputTokens\":\"$max_tokens\",\"topP\":\"$top_p\"}}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"candidates.0.content.parts.0.text\",\"contentPath\":\"candidates.0.content.parts.0.text\",\"seqPath\":\"candidates.0.index\"}"
+  }, {
+    "id" : 6,
+    "name" : "Baidu",
+    "description" : "百度文心一言",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_output_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"result\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 7,
+    "name" : "Tencent",
+    "description" : "腾讯混元",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 8,
+    "name" : "DeepSeek",
+    "description" : "DeepSeek",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 9,
+    "name" : "Zhipu",
+    "description" : "智谱AI",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 10,
+    "name" : "Moonshot",
+    "description" : "Moonshot AI",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 11,
+    "name" : "Azure",
+    "description" : "Azure OpenAI Service",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 12,
+    "name" : "Ollama",
+    "description" : "Ollama (本地部署)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"options\":{\"temperature\":\"$temperature\",\"num_predict\":\"$max_tokens\"}}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"message.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 13,
+    "name" : "Qwen",
+    "description" : "通义千问 (Qwen)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"input\":{\"messages\":\"$messages\"},\"stream\":\"$stream\",\"parameters\":{\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"request_id\",\"contentPath\":\"output.choices.0.message.content\",\"seqPath\":\"output.choices.0.index\"}"
+  }, {
+    "id" : 14,
+    "name" : "Spark",
+    "description" : "讯飞星火",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"header\":{\"app_id\":\"$app_id\"},\"parameter\":{\"chat\":{\"domain\":\"$domain\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}},\"payload\":{\"message\":{\"text\":\"$messages\"}}}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"header.sid\",\"contentPath\":\"payload.choices.text.0.content\",\"seqPath\":\"payload.choices.text.0.index\"}"
+  }, {
+    "id" : 15,
+    "name" : "MiniMax",
+    "description" : "MiniMax",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 16,
+    "name" : "Baichuan",
+    "description" : "百川智能",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 17,
+    "name" : "Yi",
+    "description" : "零一万物 Yi",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 18,
+    "name" : "OpenRouter",
+    "description" : "OpenRouter (多模型聚合)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 19,
+    "name" : "Together",
+    "description" : "Together AI",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 20,
+    "name" : "Mistral",
+    "description" : "Mistral AI",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  } ],
+  "instances" : [ ]
+}

@@ -10,6 +10,7 @@ import com.mooncell.gateway.api.OpenAiRequest;
 import com.mooncell.gateway.core.balancer.LoadBalancer;
 import com.mooncell.gateway.core.converter.ConverterFactory;
 import com.mooncell.gateway.core.converter.impl.SseResponseConverter;
+import com.mooncell.gateway.core.converter.util.PathCache;
 import com.mooncell.gateway.core.model.ModelInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +46,7 @@ public class GatewayService {
      * 统一对外的聊天/补全入口
      * <p>
      * 完整处理链路包括：<br>
-     * 1. 入参校验与幂等控制（基于 Redis）<br>
+     * 1. 入参校验与幂等控制（基于本地缓存）<br>
      * 2. 估算 token 用量并从负载均衡器获取可用实例（综合 RPM/TPM 等限流）<br>
      * 3. 按实例配置构造下游请求体和目标 URL<br>
      * 4. 通过 WebClient 调用下游模型服务，并将 SSE 流转换为统一的 JSON 文本流<br>
@@ -122,7 +123,7 @@ public class GatewayService {
                 .retrieve()
                 .bodyToFlux(String.class)
                 .flatMap(chunk -> Flux.fromIterable(
-                        sseResponseConverter.convertSseChunk(chunk, finalInstance, finalIdempotencyKey, seqCounter)
+                        finalInstance.convertSseResponse(chunk, finalIdempotencyKey, seqCounter, sseResponseConverter)
                 ))
                 .doOnError(e -> {
                     // 错误日志保留 ERROR 级别，但通过异步日志处理，不会阻塞请求线程
@@ -146,7 +147,7 @@ public class GatewayService {
                     inflightRequestTracker.onEnd();
                 });
         } catch (RuntimeException e) {
-            // 走到这里说明在同步阶段发生了未预期的异常（例如 Redis/负载均衡内部错误等），
+            // 走到这里说明在同步阶段发生了未预期的异常（例如缓存/负载均衡内部错误等），
             // 这类异常同样应该计入失败统计，否则会出现 totalRequests 增长但 failedRequests 未增长的情况，
             // 进而导致成功率被低估而失败原因列表为空。
             if (!failureRecorded.get()) {
@@ -181,6 +182,8 @@ public class GatewayService {
      * <p>
      * 优先使用转换器架构，支持 OpenAPI 格式转换。
      * 向后兼容：如果请求是旧格式（OpenAiRequest），先转换为标准格式。
+     * <p>
+     * 使用 ModelInstance 的 convertRequest 方法进行转换。
      *
      * @param instance 目标模型实例
      * @param request  请求对象（可能是 OpenAiRequest 或 ChatCompletionRequest）
@@ -202,22 +205,11 @@ public class GatewayService {
             gatewayRequest = objectMapper.valueToTree(request);
         }
         
-        // 使用转换器转换为实例特定格式
+        // 获取请求转换器
         var requestConverter = converterFactory.getRequestConverter(instance);
-        JsonNode convertedRequest = requestConverter.convert(instance, gatewayRequest);
         
-        // 确保返回 ObjectNode
-        if (convertedRequest instanceof ObjectNode) {
-            return (ObjectNode) convertedRequest;
-        } else {
-            // 如果不是 ObjectNode，尝试转换
-            ObjectNode result = objectMapper.createObjectNode();
-            if (convertedRequest.isObject()) {
-                convertedRequest.fields().forEachRemaining(entry -> 
-                    result.set(entry.getKey(), entry.getValue()));
-            }
-            return result;
-        }
+        // 使用 ModelInstance 的转换方法
+        return instance.convertRequest(gatewayRequest, requestConverter);
     }
     
     /**
@@ -364,12 +356,12 @@ public class GatewayService {
      * @param defaultRequestId 当下游未返回 requestId 时使用的默认 ID（通常为幂等键）
      * @param seqCounter       本次请求级别的自增序号
      * @return 统一封装后的字符串列表
-     * @deprecated 使用 SseResponseConverter 替代
+     * @deprecated 使用 ModelInstance.convertSseResponse 替代
      */
     @Deprecated
     private List<String> convertSseChunk(String chunk, ModelInstance instance, String defaultRequestId,
                                          AtomicInteger seqCounter) {
-        return sseResponseConverter.convertSseChunk(chunk, instance, defaultRequestId, seqCounter);
+        return instance.convertSseResponse(chunk, defaultRequestId, seqCounter, sseResponseConverter);
     }
 
     /**
@@ -467,12 +459,13 @@ public class GatewayService {
 
     /**
      * 简单的点分路径解析器，支持数组下标（如 <code>choices.0.delta.content</code>）
+     * 优化：使用路径缓存避免重复分割
      */
     private JsonNode readNodeByPath(JsonNode root, String path) {
         if (root == null || path == null || path.isBlank()) {
             return null;
         }
-        String[] segments = path.split("\\.");
+        String[] segments = PathCache.splitPath(path);
         JsonNode current = root;
         for (String segment : segments) {
             if (current == null) {

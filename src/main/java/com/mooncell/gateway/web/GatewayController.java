@@ -26,7 +26,7 @@ public class GatewayController {
      * 统一入口：接收前端的业务请求（只包含 message + 幂等键）
      * - 直接通过 WebClient 调用下游大模型服务
      * - 使用 Redis 做幂等控制
-     * - 使用 ResourceLockManager 做 Fast Fail 限流
+     * - 通过负载均衡器进行限流和实例选择
      */
     @Operation(
         summary = "AI模型统一聊天接口",
