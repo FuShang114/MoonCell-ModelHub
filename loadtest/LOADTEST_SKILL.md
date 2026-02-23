@@ -1,6 +1,6 @@
 ## MoonCell Gateway 压测 Skill（面向 AI Agent）
 
-**用途**：指导后续在本仓库内运行的 agent，如何使用 `loadtest` 目录下的 **Node 脚本** 对网关进行压测，对比 `TRADITIONAL` 与 `OBJECT_POOL` 等策略，并产出可分析的结果。
+**用途**：指导后续在本仓库内运行的 agent，如何使用 `loadtest` 目录下的 **Node 脚本** 对网关进行压测，并产出可分析的结果。
 
 ---
 
@@ -27,7 +27,7 @@
 ### 二、Node 压测脚本总览
 
 - **`run-compare-node.mjs`**
-  - 作用：纯 Node 压测，对比 `TRADITIONAL` 与 `OBJECT_POOL`，**不依赖 k6**。
+  - 作用：纯 Node 压测，**不依赖 k6**。
   - 特点：单次运行输出一个 `compare.csv`，并在 `loadtest/results` 写入 `*-samples.jsonl` 采样。
 
 - **`run-compare-persist.mjs`**
@@ -81,7 +81,6 @@ node .\loadtest\run-compare-node.mjs
 - **产物位置**：
   - `loadtest/results/compare.csv`
   - `loadtest/results/TRADITIONAL-rpsX-samples.jsonl`
-  - `loadtest/results/OBJECT_POOL-rpsX-samples.jsonl`
 
 - **agent 行动要点**：
   - 若用户未指定 RPS / 时长，默认使用 README 里的温和参数。

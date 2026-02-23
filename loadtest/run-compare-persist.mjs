@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { pickRandomPromptFromGroup } from "./prompts.mjs";
 
 const baseUrl = process.env.BASE_URL || "http://127.0.0.1:9061";
 const rpsLevels = (process.env.RPS_LEVELS || "4,8,12")
@@ -7,7 +8,7 @@ const rpsLevels = (process.env.RPS_LEVELS || "4,8,12")
   .map((v) => Number(v.trim()))
   .filter((v) => Number.isFinite(v) && v > 0);
 const durationSec = Number(process.env.DURATION_SEC || 300);
-const prompt = process.env.PROMPT || "请用三点说明系统稳定性优化建议，每点不超过18字。";
+const fixedPrompt = process.env.PROMPT || "";
 const rootDir = process.env.OUT_DIR || path.join("loadtest", "results");
 const batchName = process.env.BATCH_NAME || "";
 
@@ -45,7 +46,7 @@ fs.writeFileSync(
       baseUrl,
       rpsLevels,
       durationSec,
-      prompt,
+      promptStrategy: "random_from_promptPool_with_optional_PROMPT_override",
     },
     null,
     2
@@ -101,17 +102,16 @@ function percentile(arr, p) {
   return sorted[idx];
 }
 
-async function setAlgorithm(algo) {
-  await httpJson(`${baseUrl}/admin/load-balancing/settings`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ algorithm: algo }),
-  });
-}
-
 async function callChat() {
-  // 确保 prompt 不为空
-  const message = (prompt && prompt.trim().length > 0) ? prompt.trim() : "请简要分析系统稳定性优化建议。";
+  // 先看是否有固定 PROMPT 覆盖，否则从共享池中随机选择
+  const rawPrompt =
+    fixedPrompt && fixedPrompt.trim().length > 0
+      ? fixedPrompt.trim()
+      : pickRandomPromptFromGroup(Math.random() < 0.2 ? "short" : Math.random() > 0.8 ? "long" : "medium");
+
+  const message = rawPrompt && rawPrompt.trim().length > 0
+    ? rawPrompt.trim()
+    : "请简要分析系统稳定性优化建议。";
   const body = {
     message,
     idempotencyKey: generateUniqueIdempotencyKey(),
@@ -151,8 +151,6 @@ function avg(values) {
 
 async function runCase(algo, rps) {
   appendProgress("case_start", { algo, rps });
-  await setAlgorithm(algo);
-  await sleep(3000);
 
   const caseKey = `${algo}-rps${rps}`;
   const sampleFile = path.join(samplesDir, `${caseKey}.jsonl`);
@@ -266,7 +264,7 @@ async function runCase(algo, rps) {
 async function main() {
   appendProgress("run_start", { runDir });
   console.log(`Batch dir: ${runDir}`);
-  for (const algo of ["TRADITIONAL", "OBJECT_POOL"]) {
+  for (const algo of ["TRADITIONAL"]) {
     for (const rps of rpsLevels) {
       // eslint-disable-next-line no-await-in-loop
       await runCase(algo, rps);

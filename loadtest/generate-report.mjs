@@ -22,14 +22,15 @@ const rows = raw.slice(1).map((line) => {
   return obj;
 }).filter((r) => r.algo && Number.isFinite(r.target_rps));
 
-const algos = ["TRADITIONAL", "OBJECT_POOL"];
+const algos = [...new Set(rows.map((r) => r.algo))].filter(Boolean).sort();
 const byAlgo = Object.fromEntries(
   algos.map((a) => [a, rows.filter((r) => r.algo === a).sort((x, y) => x.target_rps - y.target_rps)])
 );
 const labels = [...new Set(rows.map((r) => r.target_rps))].sort((a, b) => a - b);
 
 function series(metric, algo) {
-  const map = new Map(byAlgo[algo].map((r) => [r.target_rps, Number(r[metric] ?? 0)]));
+  const list = byAlgo[algo] || [];
+  const map = new Map(list.map((r) => [r.target_rps, Number(r[metric] ?? 0)]));
   return labels.map((rps) => map.get(rps) ?? 0);
 }
 
@@ -47,13 +48,24 @@ const metricKeys = [
   "reject_sampling",
 ];
 const metrics = {};
+const colorPalette = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+const algoColorMap = Object.fromEntries(
+  algos.map((a, i) => {
+    const hex = colorPalette[i % colorPalette.length];
+    return [a, { border: hex, bg: hexToRgba(hex, 0.15) }];
+  })
+);
 for (const key of metricKeys) {
   if (header.includes(key)) {
-    metrics[key] = { t: series(key, "TRADITIONAL"), o: series(key, "OBJECT_POOL") };
+    metrics[key] = Object.fromEntries(algos.map((a) => [a, series(key, a)]));
   }
 }
 
-const payload = { labels, metrics };
+const payload = { labels, metrics, algos, algoColorMap };
 
 const chartConfigs = [
   { id: "c1", key: "error_rate", title: "错误率", percent: true },
@@ -88,7 +100,7 @@ const html = `<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>压测对比报告 - TRADITIONAL vs OBJECT_POOL</title>
+  <title>压测报告 - ${algos.join(" / ")}</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { box-sizing: border-box; }
@@ -106,8 +118,8 @@ const html = `<!doctype html>
   </style>
 </head>
 <body>
-  <h1>TRADITIONAL vs OBJECT_POOL 压测对比</h1>
-  <div class="meta">横轴 = 目标 RPS · 蓝色 = TRADITIONAL · 紫色 = OBJECT_POOL · 数据来源: ${path.basename(outDir)}/compare.csv · 生成时间: ${new Date().toLocaleString("zh-CN")}</div>
+  <h1>压测报告 - ${algos.join(" / ")}</h1>
+  <div class="meta">横轴 = 目标 RPS · 数据来源: ${path.basename(outDir)}/compare.csv · 生成时间: ${new Date().toLocaleString("zh-CN")}</div>
   <div class="summary">
     <table>
       <thead><tr><th>算法</th><th>目标 RPS</th><th>实际 RPS</th><th>错误率</th><th>P95 时延(ms)</th><th>成功率</th><th>吞吐</th><th>拒绝(队/预算/Sample)</th></tr></thead>
@@ -128,14 +140,15 @@ const html = `<!doctype html>
     const data = ${JSON.stringify(payload)};
     function draw(id, metric, percent){
       if (!data.metrics[metric]) return;
+      const datasets = data.algos.map(function(algo) {
+        const c = data.algoColorMap[algo] || { border: '#94a3b8', bg: 'rgba(148,163,184,0.15)' };
+        return { label: algo, data: data.metrics[metric][algo] || [], borderColor: c.border, backgroundColor: c.bg, tension: 0.25, pointRadius: 4 };
+      });
       new Chart(document.getElementById(id), {
         type: 'line',
         data: {
           labels: data.labels,
-          datasets: [
-            { label: 'TRADITIONAL', data: data.metrics[metric].t, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)', tension: 0.25, pointRadius: 4 },
-            { label: 'OBJECT_POOL', data: data.metrics[metric].o, borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.15)', tension: 0.25, pointRadius: 4 }
-          ]
+          datasets: datasets
         },
         options: {
           responsive: true,

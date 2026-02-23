@@ -1,0 +1,808 @@
+2026-02-21 21:46:49.204 [main] WARN  c.a.n.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2026-02-21 21:46:49.274 [main] WARN  c.a.n.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2026-02-21 21:46:49.281 [main] INFO  c.m.g.MoonCellGatewayApplication - Starting MoonCellGatewayApplication using Java 20.0.1 with PID 23640 (D:\MoonCell-ModelHub\target\classes started by fushang in D:\MoonCell-ModelHub)
+2026-02-21 21:46:49.281 [main] DEBUG c.m.g.MoonCellGatewayApplication - Running with Spring Boot v3.2.2, Spring v6.1.3
+2026-02-21 21:46:49.282 [main] INFO  c.m.g.MoonCellGatewayApplication - The following 1 profile is active: "local"
+2026-02-21 21:46:51.589 [main] INFO  c.m.g.s.InstanceWebClientManager - InstanceWebClientManager initialized
+2026-02-21 21:46:51.713 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-02-21 21:46:51.916 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5e541ef9
+2026-02-21 21:46:51.918 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-02-21 21:46:51.927 [main] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 21:46:51.959 [main] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 21:46:51.988 [main] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 21:46:51.995 [main] DEBUG c.m.g.core.balancer.LoadBalancer - 快照运行时状态完成: 共 0 个实例
+2026-02-21 21:46:51.995 [main] DEBUG c.m.g.core.balancer.LoadBalancer - 快照了 0 个实例的运行时状态
+2026-02-21 21:46:51.995 [main] DEBUG c.m.g.core.balancer.LoadBalancer - 实例 ByteDance-doubao-seed-1-6 (ID: 1) 没有找到快照状态，使用默认值（可能是新实例或首次刷新）
+2026-02-21 21:46:51.995 [main] DEBUG c.m.g.core.balancer.LoadBalancer - 实例 ByteDance-doubao-seed-1-8-251228 (ID: 6) 没有找到快照状态，使用默认值（可能是新实例或首次刷新）
+2026-02-21 21:46:51.996 [main] INFO  c.m.g.core.balancer.LoadBalancer - 刷新实例列表完成: 总实例数=2, 恢复状态=0, 新实例=2
+2026-02-21 21:46:52.039 [main] INFO  c.m.g.s.MonitoringMetricsService - Metrics data restored from disk: totalRequests=1, successRequests=0, failedRequests=1, failureReasons=1
+2026-02-21 21:46:52.046 [main] INFO  c.m.g.s.MonitoringMetricsService - MonitoringMetricsService initialized with async sampling and persistence
+2026-02-21 21:46:54.142 [main] WARN  c.a.n.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2026-02-21 21:46:54.237 [task-1] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 21:46:54.237 [task-2] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 21:46:55.310 [main] INFO  c.a.c.n.r.NacosServiceRegistry - nacos registry, DEFAULT_GROUP mooncell-gateway 192.168.1.8:9061 register finished
+2026-02-21 21:46:55.507 [main] INFO  c.m.g.MoonCellGatewayApplication - Started MoonCellGatewayApplication in 7.321 seconds (process running for 9.938)
+2026-02-21 21:46:55.510 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 21:46:55.511 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 21:46:55.513 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 21:46:56.548 [task-6] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 21:46:56.549 [task-4] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 21:46:59.546 [task-7] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 21:46:59.546 [task-8] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 21:47:02.533 [task-1] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 21:47:02.533 [task-2] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 21:47:22.103 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 21:47:22.980 [Thread-12] WARN  c.a.nacos.common.notify.NotifyCenter - [NotifyCenter] Start destroying Publisher
+2026-02-21 21:47:22.980 [Thread-15] WARN  c.a.n.c.http.HttpClientBeanHolder - [HttpClientBeanHolder] Start destroying common HttpClient
+2026-02-21 21:47:22.980 [Thread-12] WARN  c.a.nacos.common.notify.NotifyCenter - [NotifyCenter] Destruction of the end
+2026-02-21 21:47:22.981 [Thread-15] WARN  c.a.n.c.http.HttpClientBeanHolder - [HttpClientBeanHolder] Destruction of the end
+2026-02-21 21:47:25.092 [SpringApplicationShutdownHook] INFO  c.a.c.n.r.NacosServiceRegistry - De-registering from Nacos Server now...
+2026-02-21 21:47:25.105 [SpringApplicationShutdownHook] INFO  c.a.c.n.r.NacosServiceRegistry - De-registration finished.
+2026-02-21 21:47:25.106 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Start destroying NacosRestTemplate
+2026-02-21 21:47:25.107 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Destruction of the end
+2026-02-21 21:47:25.107 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Start destroying NacosRestTemplate
+2026-02-21 21:47:25.107 [SpringApplicationShutdownHook] WARN  com.alibaba.nacos.client.naming - [NamingHttpClientManager] Destruction of the end
+2026-02-21 21:47:25.129 [SpringApplicationShutdownHook] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 21:47:25.129 [SpringApplicationShutdownHook] INFO  c.m.g.s.InstanceWebClientManager - Shutting down InstanceWebClientManager, cleaning up 0 instances
+2026-02-21 21:47:25.129 [SpringApplicationShutdownHook] INFO  c.m.g.s.InstanceWebClientManager - InstanceWebClientManager shutdown complete
+2026-02-21 21:47:25.130 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-02-21 21:47:25.140 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-02-21 22:45:33.075 [main] WARN  c.a.n.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2026-02-21 22:45:33.162 [main] WARN  c.a.n.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2026-02-21 22:45:33.173 [main] INFO  c.m.g.MoonCellGatewayApplication - Starting MoonCellGatewayApplication using Java 20.0.1 with PID 24700 (D:\MoonCell-ModelHub\target\classes started by fushang in D:\MoonCell-ModelHub)
+2026-02-21 22:45:33.173 [main] DEBUG c.m.g.MoonCellGatewayApplication - Running with Spring Boot v3.2.2, Spring v6.1.3
+2026-02-21 22:45:33.174 [main] INFO  c.m.g.MoonCellGatewayApplication - The following 1 profile is active: "local"
+2026-02-21 22:45:36.195 [main] INFO  c.m.g.s.InstanceWebClientManager - InstanceWebClientManager initialized
+2026-02-21 22:45:36.396 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-02-21 22:45:36.659 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7d1cb59f
+2026-02-21 22:45:36.661 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-02-21 22:45:36.674 [main] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:45:36.712 [main] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:45:36.753 [main] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:45:36.762 [main] DEBUG c.m.g.core.balancer.LoadBalancer - 快照运行时状态完成: 共 0 个实例
+2026-02-21 22:45:36.763 [main] DEBUG c.m.g.core.balancer.LoadBalancer - 快照了 0 个实例的运行时状态
+2026-02-21 22:45:36.763 [main] DEBUG c.m.g.core.balancer.LoadBalancer - 实例 ByteDance-doubao-seed-1-6 (ID: 1) 没有找到快照状态，使用默认值（可能是新实例或首次刷新）
+2026-02-21 22:45:36.763 [main] DEBUG c.m.g.core.balancer.LoadBalancer - 实例 ByteDance-doubao-seed-1-8-251228 (ID: 6) 没有找到快照状态，使用默认值（可能是新实例或首次刷新）
+2026-02-21 22:45:36.764 [main] INFO  c.m.g.core.balancer.LoadBalancer - 刷新实例列表完成: 总实例数=2, 恢复状态=0, 新实例=2
+2026-02-21 22:45:36.827 [main] INFO  c.m.g.s.MonitoringMetricsService - Metrics data restored from disk: totalRequests=1, successRequests=0, failedRequests=1, failureReasons=1
+2026-02-21 22:45:36.828 [main] INFO  c.m.g.s.MonitoringMetricsService - MonitoringMetricsService initialized with async sampling and persistence
+2026-02-21 22:45:41.165 [task-2] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:45:41.165 [task-1] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:45:41.280 [main] WARN  c.a.n.client.logging.NacosLogging - Load Logback Configuration of Nacos fail, message: Could not initialize Logback Nacos logging from classpath:nacos-logback.xml
+2026-02-21 22:45:41.544 [task-5] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:45:41.544 [task-4] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:45:42.614 [main] INFO  c.a.c.n.r.NacosServiceRegistry - nacos registry, DEFAULT_GROUP mooncell-gateway 192.168.1.8:9061 register finished
+2026-02-21 22:45:42.921 [main] INFO  c.m.g.MoonCellGatewayApplication - Started MoonCellGatewayApplication in 10.849 seconds (process running for 12.466)
+2026-02-21 22:45:42.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:45:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:45:42.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:45:45.243 [task-8] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:45:45.243 [task-7] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:45:47.542 [task-1] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:45:47.542 [task-2] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:45:50.550 [task-5] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:45:50.550 [task-4] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:45:53.540 [task-8] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:45:53.540 [task-7] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:45:56.527 [task-2] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:45:56.527 [task-6] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:45:59.539 [task-5] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:45:59.539 [task-3] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:46:02.526 [task-8] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:46:02.526 [task-4] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:46:05.536 [task-2] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:46:05.536 [task-6] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:46:06.910 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:46:08.541 [task-5] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:46:08.542 [task-8] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:46:11.539 [task-1] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:46:11.539 [task-2] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:46:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:46:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:46:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:46:36.842 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:46:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:46:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:46:42.938 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:46:47.530 [task-6] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:46:47.530 [task-3] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:47:06.839 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:47:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:47:12.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:47:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:47:36.868 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:47:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:47:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:47:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:47:47.540 [task-9] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:47:47.540 [task-11] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:48:06.834 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:48:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:48:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:48:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:48:36.899 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:48:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:48:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:48:42.938 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:48:47.533 [task-13] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:48:47.533 [task-14] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:49:06.868 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:49:12.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:49:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:49:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:49:36.954 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:49:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:49:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:49:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:49:47.540 [task-15] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:49:47.541 [task-16] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:50:06.833 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:50:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:50:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:50:12.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:50:36.845 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:50:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:50:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:50:42.939 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:50:47.536 [task-18] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:50:47.536 [task-19] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:51:06.888 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:51:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:51:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:51:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:51:36.890 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:51:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:51:42.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:51:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:51:47.529 [task-23] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:51:47.529 [task-21] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:52:06.876 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:52:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:52:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:52:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:52:36.830 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:52:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:52:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:52:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:52:47.535 [task-25] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:52:47.535 [task-26] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:53:06.884 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:53:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:53:12.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:53:12.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:53:36.891 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:53:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:53:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:53:42.937 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:53:47.533 [task-28] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:53:47.533 [task-29] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:54:06.837 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:54:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:54:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:54:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:54:36.834 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:54:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:54:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:54:42.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:54:47.532 [task-31] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:54:47.533 [task-32] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:55:06.881 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:55:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:55:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:55:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:55:36.879 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:55:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:55:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:55:42.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:55:47.535 [task-34] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:55:47.535 [task-35] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:56:06.878 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:56:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:56:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:56:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:56:36.865 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:56:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:56:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:56:42.937 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:56:47.528 [task-36] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:56:47.528 [task-37] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:57:06.881 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:57:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:57:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:57:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:57:36.869 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:57:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:57:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:57:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:57:47.537 [task-41] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:57:47.537 [task-40] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:58:06.881 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:58:12.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:58:12.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:58:12.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:58:36.879 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:58:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:58:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:58:42.937 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:58:47.529 [task-43] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 22:58:47.529 [task-44] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:59:06.868 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:59:12.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:59:12.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:59:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:59:36.882 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 22:59:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 22:59:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 22:59:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 22:59:47.549 [task-45] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 22:59:47.549 [task-47] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:00:06.860 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:00:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:00:12.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:00:12.936 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:00:36.832 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:00:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:00:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:00:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:00:47.536 [task-48] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:00:47.537 [task-50] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:01:06.904 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:01:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:01:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:01:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:01:36.878 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:01:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:01:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:01:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:01:47.535 [task-51] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:01:47.535 [task-52] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:02:06.871 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:02:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:02:12.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:02:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:02:36.838 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:02:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:02:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:02:42.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:02:47.543 [task-55] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:02:47.543 [task-54] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:03:06.835 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:03:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:03:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:03:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:03:36.861 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:03:42.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:03:42.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:03:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:03:47.540 [task-57] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:03:47.540 [task-58] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:04:06.832 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:04:12.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:04:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:04:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:04:36.887 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:04:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:04:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:04:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:04:47.540 [task-60] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:04:47.541 [task-62] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:05:06.878 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:05:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:05:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:05:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:05:36.829 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:05:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:05:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:05:42.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:05:47.539 [task-63] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:05:47.539 [task-64] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:06:06.840 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:06:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:06:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:06:12.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:06:36.835 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:06:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:06:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:06:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:06:47.551 [task-67] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:06:47.551 [task-68] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:07:06.874 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:07:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:07:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:07:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:07:36.872 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:07:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:07:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:07:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:07:47.526 [task-71] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:07:47.526 [task-70] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:08:06.877 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:08:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:08:12.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:08:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:08:36.894 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:08:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:08:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:08:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:08:47.535 [task-72] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:08:47.535 [task-73] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:09:06.876 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:09:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:09:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:09:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:09:36.863 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:09:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:09:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:09:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:09:47.534 [task-75] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:09:47.534 [task-76] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:10:06.871 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:10:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:10:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:10:12.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:10:36.883 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:10:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:10:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:10:42.938 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:10:47.526 [task-78] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:10:47.526 [task-79] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:11:06.873 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:11:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:11:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:11:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:11:36.876 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:11:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:11:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:11:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:11:47.533 [task-82] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:11:47.533 [task-81] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:12:06.843 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:12:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:12:12.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:12:12.936 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:12:36.833 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:12:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:12:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:12:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:12:47.530 [task-84] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:12:47.530 [task-86] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:13:06.881 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:13:12.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:13:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:13:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:13:36.874 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:13:42.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:13:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:13:42.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:13:47.538 [task-87] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:13:47.538 [task-89] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:14:06.869 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:14:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:14:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:14:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:14:36.884 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:14:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:14:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:14:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:14:47.529 [task-90] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:14:47.529 [task-91] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:15:06.882 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:15:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:15:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:15:12.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:15:36.836 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:15:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:15:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:15:42.936 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:15:47.540 [task-93] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:15:47.540 [task-94] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:16:06.846 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:16:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:16:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:16:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:16:36.864 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:16:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:16:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:16:42.936 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:16:47.527 [task-96] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:16:47.528 [task-97] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:17:06.831 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:17:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:17:12.936 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:17:12.939 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:17:36.876 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:17:42.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:17:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:17:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:17:47.536 [task-99] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:17:47.536 [task-100] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:18:06.884 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:18:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:18:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:18:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:18:36.829 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:18:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:18:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:18:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:18:47.528 [task-104] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:18:47.528 [task-102] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:19:06.835 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:19:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:19:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:19:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:19:36.829 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:19:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:19:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:19:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:19:47.545 [task-106] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:19:47.546 [task-105] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:20:06.880 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:20:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:20:12.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:20:12.936 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:20:36.876 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:20:42.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:20:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:20:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:20:47.531 [task-108] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:20:47.531 [task-109] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:21:06.833 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:21:12.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:21:12.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:21:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:21:36.869 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:21:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:21:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:21:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:21:47.542 [task-111] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:21:47.542 [task-113] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:22:06.834 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:22:12.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:22:12.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:22:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:22:36.895 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:22:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:22:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:22:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:22:47.534 [task-114] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:22:47.534 [task-116] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:23:06.831 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:23:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:23:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:23:12.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:23:36.879 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:23:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:23:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:23:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:23:47.531 [task-117] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:23:47.531 [task-118] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:24:06.888 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:24:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:24:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:24:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:24:36.880 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:24:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:24:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:24:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:24:47.528 [task-121] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:24:47.528 [task-122] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:25:06.833 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:25:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:25:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:25:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:25:36.881 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:25:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:25:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:25:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:25:47.527 [task-123] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:25:47.527 [task-124] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:26:06.897 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:26:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:26:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:26:12.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:26:36.834 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:26:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:26:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:26:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:26:47.537 [task-126] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:26:47.537 [task-127] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:27:06.874 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:27:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:27:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:27:12.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:27:36.887 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:27:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:27:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:27:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:27:47.541 [task-129] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:27:47.541 [task-130] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:28:06.840 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:28:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:28:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:28:12.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:28:36.832 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:28:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:28:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:28:42.936 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:28:47.536 [task-132] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:28:47.537 [task-133] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:29:06.881 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:29:12.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:29:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:29:12.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:29:36.833 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:29:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:29:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:29:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:29:47.535 [task-136] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:29:47.535 [task-135] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:30:06.882 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:30:12.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:30:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:30:12.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:30:36.842 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:30:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:30:42.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:30:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:30:47.540 [task-138] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:30:47.540 [task-139] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:31:06.836 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:31:12.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:31:12.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:31:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:31:36.878 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:31:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:31:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:31:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:31:47.533 [task-143] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:31:47.533 [task-142] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:32:06.870 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:32:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:32:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:32:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:32:36.875 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:32:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:32:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:32:42.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:32:47.544 [task-145] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:32:47.544 [task-146] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:33:06.876 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:33:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:33:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:33:12.938 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:33:36.874 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:33:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:33:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:33:42.945 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:33:47.537 [task-147] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:33:47.537 [task-148] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:34:06.887 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:34:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:34:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:34:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:34:36.873 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:34:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:34:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:34:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:34:47.540 [task-152] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:34:47.540 [task-151] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:35:06.881 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:35:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:35:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:35:12.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:35:36.873 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:35:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:35:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:35:42.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:35:47.526 [task-153] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:35:47.526 [task-154] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:36:06.866 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:36:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:36:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:36:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:36:36.879 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:36:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:36:42.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:36:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:36:47.528 [task-157] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:36:47.528 [task-156] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:37:06.885 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:37:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:37:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:37:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:37:36.833 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:37:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:37:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:37:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:37:47.528 [task-160] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:37:47.528 [task-159] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:38:06.835 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:38:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:38:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:38:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:38:36.870 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:38:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:38:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:38:42.937 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:38:47.540 [task-164] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:38:47.540 [task-163] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:39:06.832 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:39:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:39:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:39:12.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:39:36.863 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:39:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:39:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:39:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:39:47.532 [task-165] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:39:47.532 [task-167] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:40:06.887 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:40:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:40:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:40:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:40:36.870 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:40:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:40:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:40:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:40:47.532 [task-168] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:40:47.532 [task-169] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:41:06.869 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:41:12.919 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:41:12.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:41:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:41:36.837 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:41:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:41:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:41:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:41:47.525 [task-171] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:41:47.525 [task-173] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:42:06.834 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:42:12.919 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:42:12.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:42:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:42:36.878 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:42:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:42:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:42:42.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:42:47.534 [task-175] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:42:47.534 [task-174] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:43:06.892 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:43:12.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:43:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:43:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:43:36.890 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:43:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:43:42.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:43:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:43:47.540 [task-179] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:43:47.540 [task-178] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:44:06.871 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:44:12.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:44:12.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:44:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:44:36.876 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:44:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:44:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:44:42.939 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:44:47.538 [task-180] INFO  c.m.gateway.service.AdminService - 获取健康实例列表
+2026-02-21 23:44:47.538 [task-181] INFO  c.m.gateway.service.AdminService - 获取实例统计信息
+2026-02-21 23:45:06.839 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:45:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:45:12.936 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:45:12.949 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:45:36.873 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:45:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:45:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:45:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:46:06.885 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:46:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:46:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:46:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:46:36.881 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:46:42.938 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:46:42.938 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:46:42.940 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:47:06.830 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:47:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:47:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:47:12.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:47:36.872 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:47:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:47:42.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:47:42.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:48:06.895 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:48:12.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:48:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:48:12.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:48:36.833 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:48:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:48:42.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:48:42.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:49:06.883 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:49:12.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:49:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:49:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:49:36.831 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:49:42.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:49:42.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:49:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:50:06.835 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:50:12.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:50:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:50:12.937 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:50:36.868 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:50:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:50:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:50:42.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:51:06.859 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:51:12.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:51:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:51:12.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:51:36.869 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:51:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:51:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:51:42.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:52:06.831 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:52:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:52:12.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:52:12.924 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:52:36.831 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:52:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:52:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:52:42.936 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:53:06.890 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:53:12.919 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:53:12.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:53:12.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:53:36.866 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:53:42.919 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:53:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:53:42.921 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:54:06.844 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:54:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:54:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:54:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:54:36.873 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:54:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:54:42.920 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:54:42.922 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:55:06.830 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:55:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:55:12.927 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:55:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:55:36.831 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:55:42.930 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:55:42.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:55:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:56:06.844 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:56:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:56:12.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:56:12.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:56:36.831 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:56:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:56:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:56:42.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:57:06.868 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:57:12.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:57:12.923 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:57:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:57:36.872 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:57:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:57:42.929 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:57:42.931 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:58:06.829 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:58:12.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:58:12.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:58:12.935 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:58:36.877 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:58:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:58:42.932 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:58:42.933 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:59:06.837 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:59:12.925 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:59:12.926 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:59:12.928 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2
+2026-02-21 23:59:36.869 [metrics-sampler] DEBUG c.m.g.s.MonitoringMetricsService - Metrics data flushed to disk
+2026-02-21 23:59:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==>  Preparing: SELECT m.*, p.name as provider_name FROM model_instance m LEFT JOIN provider p ON m.provider_id = p.id
+2026-02-21 23:59:42.934 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - ==> Parameters: 
+2026-02-21 23:59:42.936 [scheduling-1] DEBUG c.m.g.c.d.M.findAll - <==      Total: 2

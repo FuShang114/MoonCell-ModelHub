@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { promptPool, pickRandomPromptFromGroup } from "./prompts.mjs";
 
 const baseUrl = process.env.BASE_URL || "http://127.0.0.1:9061";
 const rpsLevels = (process.env.RPS_LEVELS || "4,8,12")
@@ -56,31 +57,6 @@ fs.writeFileSync(
   ),
   "utf8"
 );
-
-// Prompt 池：按 token 长度分类
-const promptPool = {
-  short: [
-    "请一句话总结这段话。",
-    "给我3个关键词。",
-    "把这句话改成更礼貌的表达。",
-    "提炼一个20字以内标题。",
-    "用一句话说明核心观点。",
-    "总结成5个字。",
-  ],
-  medium: [
-    "请用三段话分析对象池策略在高并发下的优缺点，并给出两条改进建议。",
-    "用户咨询系统抖动问题，请给出排查步骤，要求分点、可执行、每点不超过25字。",
-    "比较两种负载均衡方案在稳定性、延迟和资源成本上的差异，并给出适用场景。",
-    "根据下面需求写一段实施计划：保证成功率优先，时延次之，成本第三。",
-    "请简要分析对象池负载均衡策略的优缺点，并给出三条优化建议，每条不超过20字。",
-    "说明系统稳定性优化建议，分三点，每点不超过18字。",
-  ],
-  long: [
-    "你是一名网关架构师。请阅读以下场景并给出完整处理策略：系统存在高峰流量波动、上下游延迟抖动、实例健康状态频繁变化、请求体大小分布不均、部分请求具备高 token 消耗。请输出一个包含目标、约束、执行步骤、观测指标、回滚方案的说明，分点回答，避免冗长。",
-    "请模拟一次生产事故复盘：现象是成功率下降、拒绝率升高、GC 频率波动。请从流量特征、策略参数、资源池状态、请求输入结构四个维度给出原因分析，并提出短期止血和长期优化方案。",
-    "设计一个支持多租户、多模型、动态扩缩容的网关系统。要求包含：路由规则、负载均衡策略、限流熔断、监控告警、成本控制。请分模块说明实现思路，每模块不超过100字。",
-  ],
-};
 
 // 数据分布选择器
 function choosePrompt() {
@@ -173,14 +149,6 @@ function percentile(arr, p) {
   return sorted[idx];
 }
 
-async function setAlgorithm(algo) {
-  await httpJson(`${baseUrl}/admin/load-balancing/settings`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ algorithm: algo }),
-  });
-}
-
 async function callChat() {
   const prompt = choosePrompt();
   // 双重验证：确保 message 不为空
@@ -251,8 +219,6 @@ function avg(values) {
 
 async function runCase(algo, rps) {
   appendProgress("case_start", { algo, rps, dataDistribution });
-  await setAlgorithm(algo);
-  await sleep(3000);
 
   const caseKey = `${algo}-${dataDistribution}-rps${rps}`;
   const sampleFile = path.join(samplesDir, `${caseKey}.jsonl`);
@@ -387,7 +353,7 @@ async function main() {
   console.log(`Batch dir: ${runDir}`);
   console.log(`Data distribution: ${dataDistribution}${dataDistribution === "mixed" ? ` (weight=${mixedWeight})` : ""}`);
   
-  for (const algo of ["TRADITIONAL", "OBJECT_POOL"]) {
+  for (const algo of ["TRADITIONAL"]) {
     for (const rps of rpsLevels) {
       // eslint-disable-next-line no-await-in-loop
       await runCase(algo, rps);

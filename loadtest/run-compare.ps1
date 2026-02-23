@@ -134,7 +134,7 @@ New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 $csv = Join-Path $OutDir "compare.csv"
 "algo,target_rps,duration_sec,actual_rps,error_rate,latency_p95_ms,gc_per_min_avg,cpu_usage_avg,qps_avg,success_rate_avg,failure_rate_avg,throughput_avg,resource_usage_avg,reject_queue_full,reject_budget,reject_sampling" | Set-Content -Path $csv
 
-$algorithms = @("TRADITIONAL", "OBJECT_POOL")
+$algorithms = @("TRADITIONAL")
 foreach ($algo in $algorithms) {
   Write-Host "==== 切换算法: $algo ====" -ForegroundColor Cyan
   Set-Algorithm -Algo $algo

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { promptPool, pickRandomPromptFromGroup } from "./prompts.mjs";
 
 const baseUrl = process.env.BASE_URL || "http://127.0.0.1:9061";
 const rpsLevels = (process.env.RPS_LEVELS || "4,8,12")
@@ -35,25 +36,6 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const promptPool = {
-  short: [
-    "请一句话总结这段话。",
-    "给我3个关键词。",
-    "把这句话改成更礼貌的表达。",
-    "提炼一个20字以内标题。",
-  ],
-  medium: [
-    "请用三段话分析对象池策略在高并发下的优缺点，并给出两条改进建议。",
-    "用户咨询系统抖动问题，请给出排查步骤，要求分点、可执行、每点不超过25字。",
-    "比较两种负载均衡方案在稳定性、延迟和资源成本上的差异，并给出适用场景。",
-    "根据下面需求写一段实施计划：保证成功率优先，时延次之，成本第三。",
-  ],
-  long: [
-    "你是一名网关架构师。请阅读以下场景并给出完整处理策略：系统存在高峰流量波动、上下游延迟抖动、实例健康状态频繁变化、请求体大小分布不均、部分请求具备高 token 消耗。请输出一个包含目标、约束、执行步骤、观测指标、回滚方案的说明，分点回答，避免冗长。",
-    "请模拟一次生产事故复盘：现象是成功率下降、拒绝率升高、GC 频率波动。请从流量特征、策略参数、资源池状态、请求输入结构四个维度给出原因分析，并提出短期止血和长期优化方案。",
-  ],
-};
-
 function choosePrompt() {
   if (fixedPrompt && fixedPrompt.trim().length > 0) {
     return fixedPrompt.trim();
@@ -62,15 +44,7 @@ function choosePrompt() {
   let group = "medium";
   if (p < 0.2) group = "short";
   else if (p > 0.8) group = "long";
-  const arr = promptPool[group];
-  if (!arr || arr.length === 0) {
-    return promptPool.medium[0] || "请简要分析系统稳定性优化建议。";
-  }
-  const prompt = arr[Math.floor(Math.random() * arr.length)];
-  if (!prompt || prompt.trim().length === 0) {
-    return promptPool.medium[0] || "请简要分析系统稳定性优化建议。";
-  }
-  return prompt.trim();
+  return pickRandomPromptFromGroup(group);
 }
 
 async function httpJson(url, init = {}) {
@@ -86,14 +60,6 @@ function percentile(arr, p) {
   const sorted = [...arr].sort((a, b) => a - b);
   const idx = Math.max(0, Math.min(sorted.length - 1, Math.ceil(sorted.length * p) - 1));
   return sorted[idx];
-}
-
-async function setAlgorithm(algo) {
-  await httpJson(`${baseUrl}/admin/load-balancing/settings`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ algorithm: algo }),
-  });
 }
 
 async function callChat() {
@@ -154,8 +120,6 @@ function avg(values) {
 
 async function runCase(algo, targetRps) {
   console.log(`Running ${algo} @ ${targetRps} rps for ${durationSec}s`);
-  await setAlgorithm(algo);
-  await sleep(3000);
 
   const metricsSamples = [];
   const latencies = [];
@@ -288,7 +252,7 @@ async function runCase(algo, targetRps) {
 
 async function main() {
   const results = [];
-  for (const algo of ["TRADITIONAL", "OBJECT_POOL"]) {
+  for (const algo of ["TRADITIONAL"]) {
     for (const rps of rpsLevels) {
       // eslint-disable-next-line no-await-in-loop
       const r = await runCase(algo, rps);
