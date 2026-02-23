@@ -595,17 +595,12 @@
                 </div>
             </div>
             <div class="form-group" style="grid-column: 1 / -1;">
-                <label class="form-label">请求体模板 post_model (JSON 字符串，可选)</label>
-                <textarea class="input-sm" id="instance-postModel" rows="5"
-                          placeholder='{"model":"$model","messages":"$messages","stream":true}'></textarea>
-            </div>
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label class="form-label">OpenAPI → 下游请求转换规则 (JSON 预览，继承自服务商)</label>
+                <label class="form-label">OpenAPI → 下游请求转换规则</label>
                 <textarea class="input-sm" id="instance-requestRule-preview" rows="6" readonly
                           placeholder="选择服务商后会自动展示对应规则（JSON 格式）"></textarea>
             </div>
             <div class="form-group" style="grid-column: 1 / -1;">
-                <label class="form-label">下游 SSE → OpenAPI 响应转换规则 (JSON 预览，继承自服务商)</label>
+                <label class="form-label">下游 SSE → OpenAPI 响应转换规则</label>
                 <textarea class="input-sm" id="instance-responseRule-preview" rows="6" readonly
                           placeholder="选择服务商后会自动展示对应规则（JSON 格式）"></textarea>
             </div>
@@ -1008,7 +1003,6 @@
         document.getElementById('instance-rpmLimit').value = '';
         document.getElementById('instance-tpmLimit').value = '';
         document.getElementById('instance-active').checked = true;
-        document.getElementById('instance-postModel').value = '';
         document.getElementById('instance-rawEnabled').checked = false;
         const reqPreview = document.getElementById('instance-requestRule-preview');
         const respPreview = document.getElementById('instance-responseRule-preview');
@@ -1040,7 +1034,6 @@
         document.getElementById('instance-rpmLimit').value = inst.rpmLimit || '';
         document.getElementById('instance-tpmLimit').value = inst.tpmLimit || '';
         document.getElementById('instance-active').checked = inst.isActive !== false;
-        document.getElementById('instance-postModel').value = inst.postModel || '';
         document.getElementById('instance-rawEnabled').checked = !!inst.responseRawEnabled;
         const reqPreview = document.getElementById('instance-requestRule-preview');
         const respPreview = document.getElementById('instance-responseRule-preview');
@@ -1066,7 +1059,6 @@
         const model = document.getElementById('instance-model').value.trim();
         const url = document.getElementById('instance-url').value.trim();
         const apiKey = document.getElementById('instance-apiKey').value.trim();
-        const postModel = (document.getElementById('instance-postModel').value || '').trim();
         const rpmLimit = document.getElementById('instance-rpmLimit').value;
         const tpmLimit = document.getElementById('instance-tpmLimit').value;
 
@@ -1075,7 +1067,6 @@
             model,
             url,
             apiKey,
-            postModel: postModel || null,
             rpmLimit: rpmLimit ? Number(rpmLimit) : null,
             tpmLimit: tpmLimit ? Number(tpmLimit) : null,
             responseRawEnabled: document.getElementById('instance-rawEnabled').checked
