@@ -1,5 +1,6 @@
 package com.mooncell.gateway.service;
 
+import com.mooncell.gateway.api.OpenAiRequest;
 import com.mooncell.gateway.core.balancer.LoadBalancer;
 import com.mooncell.gateway.core.balancer.LoadBalancingAlgorithm;
 import com.mooncell.gateway.core.balancer.LoadBalancingSettings;
@@ -393,21 +394,19 @@ public class AdminService {
     public String testInstance(Long id, String testMessage) {
         log.info("测试实例: {}, 消息: {}", id, testMessage);
         ModelInstance instance = instanceStore.findById(id);
-        
+
         if (instance == null) {
             return "{\"error\": \"实例不存在\"}";
         }
-        
+
         try {
-            // 构建测试请求体
-            ObjectNode testRequest = objectMapper.createObjectNode();
-            testRequest.put("model", instance.getModelName());
-            testRequest.put("message", testMessage != null ? testMessage : "test");
-            testRequest.put("stream", false); // 非流式，便于获取完整响应
-            
-            // 使用GatewayService构建实际请求体
-            ObjectNode payload = gatewayService.buildPayload(instance, testMessage != null ? testMessage : "test");
-            
+            // 使用与正式请求相同的转换链路，确保测试结果真实可靠
+            OpenAiRequest openAiRequest = OpenAiRequest.builder()
+                    .message(testMessage != null ? testMessage : "test")
+                    .build();
+
+            ObjectNode payload = gatewayService.buildPayloadWithConverter(instance, openAiRequest);
+
             // 发送请求
             WebClient instanceWebClient = instanceWebClientManager.getWebClient(instance);
             String response = instanceWebClient.post()
@@ -424,7 +423,7 @@ public class AdminService {
                     .bodyToMono(String.class)
                     .timeout(Duration.ofSeconds(30))
                     .block();
-            
+
             return response != null ? response : "{\"error\": \"响应为空\"}";
         } catch (Exception e) {
             log.error("测试实例失败: {}", id, e);
@@ -469,7 +468,11 @@ public class AdminService {
                 .build();
 
         try {
-            ObjectNode payload = gatewayService.buildPayload(temp, testMessage);
+            // 使用与正式请求相同的转换链路，构造下游请求体
+            OpenAiRequest openAiRequest = OpenAiRequest.builder()
+                    .message(testMessage)
+                    .build();
+            ObjectNode payload = gatewayService.buildPayloadWithConverter(temp, openAiRequest);
 
             // 未保存配置不走 InstanceWebClientManager（其要求 instanceId 非空且用于缓存/连接池）
             HttpClient httpClient = HttpClient.create()

@@ -143,11 +143,17 @@
         }
 
         .error-message, .success-message {
+            position: fixed;
+            top: 16px;
+            right: 24px;
+            z-index: 11000; /* 高于 .modal 的 10000，保证弹窗打开时也可见 */
+            max-width: 420px;
             padding: 0.75rem 1rem;
             border-radius: 10px;
-            margin-bottom: 12px;
+            margin-bottom: 0;
             display: none;
             border: 1px solid transparent;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         }
         .error-message { background-color: #fef2f2; border-color: #fecaca; color: #dc2626; }
         .success-message { background-color: #f0fdf4; border-color: #bbf7d0; color: #166534; }
