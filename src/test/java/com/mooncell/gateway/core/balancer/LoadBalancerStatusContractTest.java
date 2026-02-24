@@ -22,7 +22,7 @@ class LoadBalancerStatusContractTest {
         LoadBalancingSettingsStore store = mock(LoadBalancingSettingsStore.class);
         InstanceWebClientManager webClientManager = mock(InstanceWebClientManager.class);
         when(store.load()).thenReturn(Optional.empty());
-        when(instanceStore.listAllInstances()).thenReturn(List.of(
+        when(instanceStore.findAllInstances()).thenReturn(List.of(
                 ModelInstance.builder()
                         .id(1L)
                         .providerName("p")
