@@ -205,11 +205,8 @@ public class GatewayService {
             gatewayRequest = objectMapper.valueToTree(request);
         }
         
-        // 获取请求转换器
-        var requestConverter = converterFactory.getRequestConverter(instance);
-        
-        // 使用 ModelInstance 的转换方法
-        return instance.convertRequest(gatewayRequest, requestConverter);
+        // 使用预绑定到实例上的转换方法生成下游请求体
+        return instance.convertRequest(gatewayRequest);
     }
     
     /**

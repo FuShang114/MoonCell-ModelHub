@@ -19,10 +19,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 基于转换规则的响应转换器
+ * 基于转换规则的响应转换器。
  * <p>
- * 如果实例配置了响应转换规则，则使用规则进行转换；
- * 否则回退到默认的 OpenApiResponseConverter。
+ * 语义约定：
+ * <ul>
+ *   <li>如果实例未配置响应转换规则（rule 为空），视为下游已是 OpenAPI 格式，直接透传 JSON 文本；</li>
+ *   <li>如果配置了规则但解析/应用失败，视为配置错误：抛出异常，由上层统一记失败统计；</li>
+ *   <li>不再回退到任何“默认转换器”，避免掩盖配置问题。</li>
+ * </ul>
  */
 @Slf4j
 @Component
@@ -30,15 +34,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RuleBasedResponseConverter implements ResponseConverter {
     
     private final ObjectMapper objectMapper;
-    private final OpenApiResponseConverter fallbackConverter;
     
     @Override
     public List<String> convert(ModelInstance instance, JsonNode instanceResponse, 
                                String defaultRequestId, AtomicInteger seqCounter) {
         String ruleJson = instance.getResponseConversionRule();
         if (ruleJson == null || ruleJson.isBlank()) {
-            // 没有配置转换规则，使用默认转换器
-            return fallbackConverter.convert(instance, instanceResponse, defaultRequestId, seqCounter);
+            // 没有配置转换规则：认为下游已经是 OpenAPI 格式，直接透传 JSON 文本
+            List<String> outputs = new ArrayList<>();
+            if (instanceResponse != null) {
+                outputs.add(instanceResponse.toString());
+            }
+            return outputs;
         }
         
         try {
@@ -46,14 +53,16 @@ public class RuleBasedResponseConverter implements ResponseConverter {
             ConversionRule rule = parseRule(ruleJson);
             
             if (rule.getResponseRule() == null) {
-                return fallbackConverter.convert(instance, instanceResponse, defaultRequestId, seqCounter);
+                throw new IllegalStateException("Response conversion rule is missing 'response' definition");
             }
             
             return applyResponseRule(instance, instanceResponse, defaultRequestId, seqCounter, rule.getResponseRule());
         } catch (Exception e) {
-            log.warn("Failed to apply response conversion rule for instance {}, fallback to default: {}", 
+            // 规则本身或应用过程出现异常：视为配置错误，直接抛出让上层计入失败统计
+            log.warn("Failed to apply response conversion rule for instance {}: {}", 
                 instance.getModelName(), e.getMessage());
-            return fallbackConverter.convert(instance, instanceResponse, defaultRequestId, seqCounter);
+            throw new IllegalStateException("Failed to apply response conversion rule for instance "
+                    + instance.getModelName(), e);
         }
     }
     
@@ -93,32 +102,32 @@ public class RuleBasedResponseConverter implements ResponseConverter {
         
         String type = rule.has("type") ? rule.get("type").asText() : "template";
         
-            try {
-                ChatCompletionResponse standardResponse;
-                if ("template".equals(type)) {
-                    // 模板模式：使用 JSON 模板
-                    standardResponse = applyTemplateRule(instance, instanceResponse, defaultRequestId, seqCounter, rule);
-                } else if ("mapping".equals(type)) {
-                    // 映射模式：字段映射
-                    standardResponse = applyMappingRule(instance, instanceResponse, defaultRequestId, seqCounter, rule);
-                } else {
-                    // 默认使用映射模式（兼容旧的路径映射方式）
-                    standardResponse = applyMappingRule(instance, instanceResponse, defaultRequestId, seqCounter, rule);
-                }
-                
-                if (standardResponse != null) {
-                    String jsonString = objectMapper.writeValueAsString(standardResponse);
-                    outputs.add(jsonString);
-                } else {
-                    // 如果规则转换失败，回退到默认转换器
-                    return fallbackConverter.convert(instance, instanceResponse, defaultRequestId, seqCounter);
-                }
-            } catch (Exception e) {
-                log.debug("Failed to convert response using rule for instance {}: {}", 
-                    instance.getModelName(), e.getMessage());
-                // 转换失败，回退到默认转换器
-                return fallbackConverter.convert(instance, instanceResponse, defaultRequestId, seqCounter);
-            }
+        ChatCompletionResponse standardResponse;
+        if ("template".equals(type)) {
+            // 模板模式：使用 JSON 模板
+            standardResponse = applyTemplateRule(instance, instanceResponse, defaultRequestId, seqCounter, rule);
+        } else if ("mapping".equals(type)) {
+            // 映射模式：字段映射
+            standardResponse = applyMappingRule(instance, instanceResponse, defaultRequestId, seqCounter, rule);
+        } else {
+            // 默认使用映射模式（兼容旧的路径映射方式）
+            standardResponse = applyMappingRule(instance, instanceResponse, defaultRequestId, seqCounter, rule);
+        }
+        
+        if (standardResponse == null) {
+            throw new IllegalStateException("Response conversion using rule returned null for instance "
+                    + instance.getModelName());
+        }
+        
+        try {
+            String jsonString = objectMapper.writeValueAsString(standardResponse);
+            outputs.add(jsonString);
+        } catch (Exception e) {
+            log.debug("Failed to serialize ChatCompletionResponse for instance {}: {}", 
+                instance.getModelName(), e.getMessage());
+            throw new IllegalStateException("Failed to serialize ChatCompletionResponse for instance "
+                    + instance.getModelName(), e);
+        }
         
         return outputs;
     }

@@ -1,11 +1,11 @@
 {
-  "providerSeq" : 20,
-  "instanceSeq" : 0,
+  "providerSeq" : 28,
+  "instanceSeq" : 1,
   "providers" : [ {
     "id" : 1,
     "name" : "bytedance",
     "description" : "字节跳动豆包",
-    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"input\":\"$messages\",\"stream\":\"$stream\",\"parameters\":{\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}}",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"input\":\"$message\",\"stream\":\"$stream\",\"parameters\":{\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}}",
     "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"item_id\",\"contentPath\":\"delta.text\",\"seqPath\":\"sequence_number\"}"
   }, {
     "id" : 2,
@@ -24,13 +24,13 @@
     "name" : "Anthropic",
     "description" : "Anthropic Claude",
     "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"max_tokens\":\"$max_tokens\",\"temperature\":\"$temperature\",\"top_p\":\"$top_p\"}}",
-    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"delta.text\",\"seqPath\":\"choices.0.index\"}"
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"delta.text\",\"seqPath\":\"index\"}"
   }, {
     "id" : 5,
     "name" : "Google",
     "description" : "Google Gemini",
-    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"contents\":\"$messages\",\"generationConfig\":{\"temperature\":\"$temperature\",\"maxOutputTokens\":\"$max_tokens\",\"topP\":\"$top_p\"}}}",
-    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"candidates.0.content.parts.0.text\",\"contentPath\":\"candidates.0.content.parts.0.text\",\"seqPath\":\"candidates.0.index\"}"
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"$message\"}]}],\"generationConfig\":{\"temperature\":\"$temperature\",\"maxOutputTokens\":\"$max_tokens\",\"topP\":\"$top_p\"}}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"candidates.0.index\",\"contentPath\":\"candidates.0.content.parts.0.text\",\"seqPath\":\"candidates.0.index\"}"
   }, {
     "id" : 6,
     "name" : "Baidu",
@@ -83,7 +83,7 @@
     "id" : 14,
     "name" : "Spark",
     "description" : "讯飞星火",
-    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"header\":{\"app_id\":\"$app_id\"},\"parameter\":{\"chat\":{\"domain\":\"$domain\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}},\"payload\":{\"message\":{\"text\":\"$messages\"}}}}",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"header\":{\"app_id\":\"$app_id\"},\"parameter\":{\"chat\":{\"domain\":\"$domain\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}},\"payload\":{\"message\":{\"text\":\"$message\"}}}}",
     "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"header.sid\",\"contentPath\":\"payload.choices.text.0.content\",\"seqPath\":\"payload.choices.text.0.index\"}"
   }, {
     "id" : 15,
@@ -121,6 +121,92 @@
     "description" : "Mistral AI",
     "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\"}}",
     "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 21,
+    "name" : "xAI",
+    "description" : "xAI Grok (OpenAI 兼容)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\",\"top_p\":\"$top_p\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 22,
+    "name" : "Perplexity",
+    "description" : "Perplexity AI (OpenAI 兼容)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\",\"top_p\":\"$top_p\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 23,
+    "name" : "Groq",
+    "description" : "Groq (OpenAI 兼容)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\",\"top_p\":\"$top_p\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 24,
+    "name" : "Fireworks",
+    "description" : "Fireworks AI (OpenAI 兼容)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\",\"top_p\":\"$top_p\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 25,
+    "name" : "Cerebras",
+    "description" : "Cerebras (OpenAI 兼容)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\",\"top_p\":\"$top_p\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 26,
+    "name" : "DeepInfra",
+    "description" : "DeepInfra (OpenAI 兼容)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\",\"top_p\":\"$top_p\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 27,
+    "name" : "Novita",
+    "description" : "Novita AI (OpenAI 兼容)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\",\"top_p\":\"$top_p\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
+  }, {
+    "id" : 28,
+    "name" : "Cloudflare",
+    "description" : "Cloudflare Workers AI (OpenAI 兼容)",
+    "requestConversionRule" : "{\"type\":\"template\",\"template\":{\"model\":\"$model\",\"messages\":\"$messages\",\"stream\":\"$stream\",\"temperature\":\"$temperature\",\"max_tokens\":\"$max_tokens\",\"top_p\":\"$top_p\"}}",
+    "responseConversionRule" : "{\"type\":\"mapping\",\"requestIdPath\":\"id\",\"contentPath\":\"choices.0.delta.content\",\"seqPath\":\"choices.0.index\"}"
   } ],
-  "instances" : [ ]
+  "instances" : [ {
+    "id" : 1,
+    "providerId" : 1,
+    "providerName" : "bytedance",
+    "modelName" : "doubao-seed-1-6",
+    "url" : "https://ark.cn-beijing.volces.com/api/v3/responses",
+    "apiKey" : "7f1b1575-fb27-4230-a637-2316117d2cb8",
+    "postModel" : null,
+    "responseRequestIdPath" : null,
+    "responseContentPath" : null,
+    "responseSeqPath" : null,
+    "responseRawEnabled" : false,
+    "requestConversionRule" : "{\n  \"type\": \"template\",\n  \"template\": {\n    \"model\": \"$model\",\n    \"input\": \"$message\",\n    \"stream\": \"$stream\",\n    \"parameters\": {\n      \"temperature\": \"$temperature\",\n      \"max_tokens\": \"$max_tokens\"\n    }\n  }\n}",
+    "responseConversionRule" : "{\n  \"type\": \"mapping\",\n  \"requestIdPath\": \"item_id\",\n  \"contentPath\": \"delta.text\",\n  \"seqPath\": \"sequence_number\"\n}",
+    "weight" : 10,
+    "rpmLimit" : 30000,
+    "tpmLimit" : 5000000,
+    "poolKey" : null,
+    "maxQps" : 10,
+    "isActive" : true,
+    "name" : "bytedance-doubao-seed-1-6",
+    "circuitOpen" : false,
+    "lastUsedTime" : 1771850368381,
+    "failureCount" : 0,
+    "totalLatency" : 0,
+    "requestCount" : 0,
+    "lastHeartbeat" : 0,
+    "lastFailureTime" : 0,
+    "occupied" : false,
+    "occupiedState" : 0,
+    "occupiedAtMs" : 0,
+    "holdTimeoutSeconds" : 60,
+    "occupiedExpireAtMs" : 0,
+    "parentInstanceId" : null,
+    "requestConverter" : { },
+    "effectiveTpmLimit" : 5000000,
+    "effectiveRpmLimit" : 30000,
+    "healthy" : true
+  } ]
 }

@@ -1,5 +1,7 @@
 package com.mooncell.gateway.core.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -10,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,6 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ModelInstance {
     public static final int FIXED_HOLD_TIMEOUT_SECONDS = 60;
     private Long id;
@@ -95,6 +99,22 @@ public class ModelInstance {
     private transient long occupiedExpireAtMs = 0L;
     @Builder.Default
     private transient Long parentInstanceId = null;
+
+    /**
+     * 预绑定的请求转换器。
+     * <p>
+     * 由运行时初始化逻辑（例如 InstanceStore + ConverterFactory）在实例装载或配置更新后注入，
+     * 负载均衡拿到实例后即可直接调用 {@link #convertRequest(JsonNode)} 构造下游请求体，
+     * 避免每次再去做一次“根据规则选择转换器”的查找。
+     *
+     * <p>注意：该字段仅为运行时依赖，不参与 JSON 持久化。
+     * 通过 {@link JsonIgnore} 避免 Jackson 尝试将磁盘中的空对象反序列化为
+     * 抽象类型 {@link RequestConverter}，从而修复应用启动时
+     * “Cannot construct instance of RequestConverter” 的异常。
+     */
+    @Builder.Default
+    @JsonIgnore
+    private transient RequestConverter requestConverter = null;
 
     public void ensureRuntimeState() {
         if (failureCount == null) {
@@ -249,6 +269,21 @@ public class ModelInstance {
             throw new IllegalStateException("Converted request is not an object: " + 
                 (converted != null ? converted.getNodeType() : "null"));
         }
+    }
+
+    /**
+     * 使用预绑定的请求转换器将 OpenAPI 格式请求转换为实例特定格式。
+     * <p>
+     * 要求在调用前已通过运行时初始化逻辑为当前实例设置好 {@link #requestConverter}。
+     *
+     * @param openApiRequest OpenAPI 格式请求（JsonNode）
+     * @return 实例特定格式的请求体（ObjectNode，可直接用于 WebClient）
+     */
+    public ObjectNode convertRequest(JsonNode openApiRequest) {
+        if (this.requestConverter == null) {
+            throw new IllegalStateException("Request converter not bound for instance: " + getId());
+        }
+        return convertRequest(openApiRequest, this.requestConverter);
     }
 
     /**

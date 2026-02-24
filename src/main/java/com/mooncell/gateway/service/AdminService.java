@@ -5,6 +5,7 @@ import com.mooncell.gateway.core.balancer.LoadBalancer;
 import com.mooncell.gateway.core.balancer.LoadBalancingAlgorithm;
 import com.mooncell.gateway.core.balancer.LoadBalancingSettings;
 import com.mooncell.gateway.core.dao.InstanceStore;
+import com.mooncell.gateway.core.converter.ConverterFactory;
 import com.mooncell.gateway.core.model.ModelInstance;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,6 +20,7 @@ import com.mooncell.gateway.dto.ProviderRequest;
 import com.mooncell.gateway.dto.StrategyStatusDto;
 import com.mooncell.gateway.service.GatewayService;
 import com.mooncell.gateway.service.InstanceWebClientManager;
+import com.mooncell.gateway.core.converter.impl.SseResponseConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -29,6 +31,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,6 +45,8 @@ public class AdminService {
     private final InstanceWebClientManager instanceWebClientManager;
     private final ObjectMapper objectMapper;
     private final HeartbeatService heartbeatService;
+    private final ConverterFactory converterFactory;
+    private final SseResponseConverter sseResponseConverter;
     // RestartCoordinator 和持久化仅用于手工重启场景；线上接口改为纯热切换后不再通过这里触发进程退出。
 
     public List<HealthyInstanceDto> getHealthyInstances() {
@@ -81,10 +86,16 @@ public class AdminService {
             throw new Exception("非法服务商");
         }
 
-        // 2. 获取服务商信息，继承转换规则
+        // 2. 获取服务商信息，继承转换规则（作为默认值），但允许实例级覆盖
         var providerRecord = instanceStore.findProviderById(providerId);
-        String requestConversionRule = providerRecord != null ? providerRecord.requestConversionRule() : null;
-        String responseConversionRule = providerRecord != null ? providerRecord.responseConversionRule() : null;
+        String requestConversionRule = request.getRequestConversionRule();
+        String responseConversionRule = request.getResponseConversionRule();
+        if (requestConversionRule == null || requestConversionRule.isBlank()) {
+            requestConversionRule = providerRecord != null ? providerRecord.requestConversionRule() : null;
+        }
+        if (responseConversionRule == null || responseConversionRule.isBlank()) {
+            responseConversionRule = providerRecord != null ? providerRecord.responseConversionRule() : null;
+        }
         
         // 3. 插入 DB
         ModelInstance instance = ModelInstance.builder()
@@ -97,6 +108,7 @@ public class AdminService {
                 .responseContentPath(request.getResponseContentPath())
                 .responseSeqPath(request.getResponseSeqPath())
                 .responseRawEnabled(request.getResponseRawEnabled())
+                // 注意：转换规则是“实例级”字段，默认从服务商复制一份，后续可在实例上单独修改
                 .requestConversionRule(requestConversionRule)
                 .responseConversionRule(responseConversionRule)
                 .weight(10)
@@ -142,7 +154,9 @@ public class AdminService {
                         instance.getResponseRequestIdPath(),
                         instance.getResponseContentPath(),
                         instance.getResponseSeqPath(),
-                        instance.getResponseRawEnabled()
+                        instance.getResponseRawEnabled(),
+                        instance.getRequestConversionRule(),
+                        instance.getResponseConversionRule()
                 ))
                 .collect(Collectors.toList());
     }
@@ -174,8 +188,24 @@ public class AdminService {
         
         // 获取服务商信息，继承转换规则
         var providerRecord = instanceStore.findProviderById(providerId);
-        String requestConversionRule = providerRecord != null ? providerRecord.requestConversionRule() : existing.getRequestConversionRule();
-        String responseConversionRule = providerRecord != null ? providerRecord.responseConversionRule() : existing.getResponseConversionRule();
+        // 允许通过请求体传入实例级转换规则；为空时保留原有实例级规则，若原来也为空则回落到服务商默认
+        String requestConversionRule = request.getRequestConversionRule();
+        String responseConversionRule = request.getResponseConversionRule();
+        if (requestConversionRule == null) {
+            requestConversionRule = existing.getRequestConversionRule() != null
+                    ? existing.getRequestConversionRule()
+                    : (providerRecord != null ? providerRecord.requestConversionRule() : null);
+        } else if (requestConversionRule.isBlank()) {
+            // 前端显式清空时，存 null，表示不使用实例级覆盖
+            requestConversionRule = null;
+        }
+        if (responseConversionRule == null) {
+            responseConversionRule = existing.getResponseConversionRule() != null
+                    ? existing.getResponseConversionRule()
+                    : (providerRecord != null ? providerRecord.responseConversionRule() : null);
+        } else if (responseConversionRule.isBlank()) {
+            responseConversionRule = null;
+        }
         
         ModelInstance updated = ModelInstance.builder()
                 .id(id)
@@ -189,6 +219,7 @@ public class AdminService {
                 .responseContentPath(request.getResponseContentPath())
                 .responseSeqPath(request.getResponseSeqPath())
                 .responseRawEnabled(request.getResponseRawEnabled())
+                // 转换规则仍然是实例级字段，不会写回到服务商配置
                 .requestConversionRule(requestConversionRule)
                 .responseConversionRule(responseConversionRule)
                 .rpmLimit(request.getRpmLimit() != null ? request.getRpmLimit() : 600)
@@ -391,13 +422,15 @@ public class AdminService {
         return "not_found";
     }
 
-    public String testInstance(Long id, String testMessage) {
+    public Mono<String> testInstance(Long id, String testMessage) {
         log.info("测试实例: {}, 消息: {}", id, testMessage);
         ModelInstance instance = instanceStore.findById(id);
 
         if (instance == null) {
-            return "{\"error\": \"实例不存在\"}";
+            return Mono.just("{\"error\": \"实例不存在\"}");
         }
+
+        final long startTime = System.currentTimeMillis();
 
         try {
             // 使用与正式请求相同的转换链路，确保测试结果真实可靠
@@ -409,7 +442,7 @@ public class AdminService {
 
             // 发送请求
             WebClient instanceWebClient = instanceWebClientManager.getWebClient(instance);
-            String response = instanceWebClient.post()
+            return instanceWebClient.post()
                     .uri(instance.getUrl())
                     .headers(headers -> {
                         headers.setBearerAuth(instance.getApiKey());
@@ -422,29 +455,44 @@ public class AdminService {
                     .retrieve()
                     .bodyToMono(String.class)
                     .timeout(Duration.ofSeconds(30))
-                    .block();
-
-            return response != null ? response : "{\"error\": \"响应为空\"}";
+                    .map(response -> {
+                        long elapsed = System.currentTimeMillis() - startTime;
+                        List<String> converted = convertTestResponses(instance, response);
+                        return buildTestDebugResponse(payload, response, converted, elapsed, null);
+                    })
+                    .onErrorResume(e -> {
+                        log.error("测试实例失败: {}", id, e);
+                        long elapsed = System.currentTimeMillis() - startTime;
+                        return Mono.just(buildTestDebugResponse(payload, null, null, elapsed, e.getMessage()));
+                    });
         } catch (Exception e) {
             log.error("测试实例失败: {}", id, e);
-            return "{\"error\": \"" + e.getMessage() + "\"}";
+            long elapsed = System.currentTimeMillis() - startTime;
+            return Mono.just(buildTestDebugResponse(null, null, null, elapsed, e.getMessage()));
         }
     }
 
-    public String testInstanceConfig(com.mooncell.gateway.dto.TestInstanceConfigRequest request) throws Exception {
+    public Mono<String> testInstanceConfig(com.mooncell.gateway.dto.TestInstanceConfigRequest request) {
         if (request == null || request.getInstance() == null) {
-            return "{\"error\": \"参数不能为空\"}";
+            return Mono.just("{\"error\": \"参数不能为空\"}");
         }
         AddInstanceRequest cfg = request.getInstance();
         String testMessage = request.getTestMessage() != null ? request.getTestMessage() : "ping";
 
         Long providerId = instanceStore.findProviderIdByName(cfg.getProvider());
         if (providerId == null) {
-            throw new Exception("非法服务商");
+            return Mono.just("{\"error\": \"非法服务商\"}");
         }
         var providerRecord = instanceStore.findProviderById(providerId);
-        String requestConversionRule = providerRecord != null ? providerRecord.requestConversionRule() : null;
-        String responseConversionRule = providerRecord != null ? providerRecord.responseConversionRule() : null;
+        // 优先使用当前配置中的实例级转换规则，若为空则回落到服务商默认
+        String requestConversionRule = cfg.getRequestConversionRule();
+        String responseConversionRule = cfg.getResponseConversionRule();
+        if (requestConversionRule == null || requestConversionRule.isBlank()) {
+            requestConversionRule = providerRecord != null ? providerRecord.requestConversionRule() : null;
+        }
+        if (responseConversionRule == null || responseConversionRule.isBlank()) {
+            responseConversionRule = providerRecord != null ? providerRecord.responseConversionRule() : null;
+        }
 
         // 构建一个临时实例对象（不落库）
         ModelInstance temp = ModelInstance.builder()
@@ -467,7 +515,13 @@ public class AdminService {
                 .isActive(true)
                 .build();
 
+        final long startTime = System.currentTimeMillis();
+
         try {
+            // 为临时实例绑定请求转换器，使其与正式实例使用相同的转换链路
+            temp.ensureRuntimeState();
+            temp.setRequestConverter(converterFactory.getRequestConverter(temp));
+
             // 使用与正式请求相同的转换链路，构造下游请求体
             OpenAiRequest openAiRequest = OpenAiRequest.builder()
                     .message(testMessage)
@@ -482,7 +536,7 @@ public class AdminService {
                     .clientConnector(new org.springframework.http.client.reactive.ReactorClientHttpConnector(httpClient))
                     .build();
 
-            String response = webClient.post()
+            return webClient.post()
                     .uri(temp.getUrl())
                     .headers(headers -> {
                         headers.setBearerAuth(temp.getApiKey());
@@ -495,11 +549,92 @@ public class AdminService {
                     .retrieve()
                     .bodyToMono(String.class)
                     .timeout(Duration.ofSeconds(30))
-                    .block();
-            return response != null ? response : "{\"error\": \"响应为空\"}";
+                    .map(response -> {
+                        long elapsed = System.currentTimeMillis() - startTime;
+                        List<String> converted = convertTestResponses(temp, response);
+                        return buildTestDebugResponse(payload, response, converted, elapsed, null);
+                    })
+                    .onErrorResume(e -> {
+                        log.error("测试实例配置失败", e);
+                        long elapsed = System.currentTimeMillis() - startTime;
+                        return Mono.just(buildTestDebugResponse(payload, null, null, elapsed, e.getMessage()));
+                    });
         } catch (Exception e) {
             log.error("测试实例配置失败", e);
-            return "{\"error\": \"" + e.getMessage() + "\"}";
+            long elapsed = System.currentTimeMillis() - startTime;
+            return Mono.just(buildTestDebugResponse(null, null, null, elapsed, e.getMessage()));
+        }
+    }
+
+    /**
+     * 为“测试连接”接口构造调试信息，包含实际下游请求体和下游原始响应/错误。
+     * 这样前端可以直观看到自己的模板（postModel / 转换规则）究竟生成了什么请求。
+     */
+    private String buildTestDebugResponse(ObjectNode payload,
+                                          String downstreamResponse,
+                                          List<String> convertedResponses,
+                                          Long elapsedMillis,
+                                          String errorMessage) {
+        try {
+            ObjectNode root = objectMapper.createObjectNode();
+            if (payload != null) {
+                // 使用深拷贝避免后续修改影响已返回的数据
+                root.set("requestPayload", payload.deepCopy());
+            } else {
+                root.putNull("requestPayload");
+            }
+            if (downstreamResponse != null) {
+                root.put("downstreamResponse", downstreamResponse);
+            } else {
+                root.putNull("downstreamResponse");
+            }
+            if (convertedResponses != null) {
+                var arrayNode = objectMapper.createArrayNode();
+                for (String s : convertedResponses) {
+                    arrayNode.add(s);
+                }
+                root.set("convertedResponses", arrayNode);
+            } else {
+                root.putNull("convertedResponses");
+            }
+            ObjectNode metrics = objectMapper.createObjectNode();
+            if (elapsedMillis != null) {
+                metrics.put("elapsedMillis", elapsedMillis);
+            }
+            if (downstreamResponse != null) {
+                metrics.put("downstreamLength", downstreamResponse.length());
+            }
+            if (convertedResponses != null) {
+                metrics.put("convertedCount", convertedResponses.size());
+            }
+            root.set("metrics", metrics);
+            if (errorMessage != null) {
+                root.put("error", errorMessage);
+            } else {
+                root.putNull("error");
+            }
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(root);
+        } catch (Exception e) {
+            // 兜底：若调试信息构造失败，则至少返回错误原因
+            String msg = errorMessage != null ? errorMessage : e.getMessage();
+            return "{\"error\": \"" + msg + "\"}";
+        }
+    }
+
+    /**
+     * 在测试链路中复用正式链路的 SSE + 规则转换逻辑，生成 OpenAPI 统一格式的响应片段。
+     */
+    private List<String> convertTestResponses(ModelInstance instance, String downstreamResponse) {
+        if (downstreamResponse == null || downstreamResponse.isBlank()) {
+            return null;
+        }
+        try {
+            AtomicInteger seqCounter = new AtomicInteger(0);
+            String defaultRequestId = "test-" + (instance.getId() != null ? instance.getId() : "config");
+            return sseResponseConverter.convertSseChunk(downstreamResponse, instance, defaultRequestId, seqCounter);
+        } catch (Exception e) {
+            log.warn("convertTestResponses failed for instance {}: {}", instance.getModelName(), e.getMessage());
+            return null;
         }
     }
 

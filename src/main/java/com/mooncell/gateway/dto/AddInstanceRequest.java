@@ -44,4 +44,10 @@ public class AddInstanceRequest {
 
     @Schema(description = "兼容字段：旧版最大QPS，后续废弃", example = "10", required = false)
     private Integer maxQps;
+
+    @Schema(description = "OpenAPI → 下游请求转换规则（JSON 字符串，实例级，可选）", required = false)
+    private String requestConversionRule;
+
+    @Schema(description = "下游 SSE → OpenAPI 响应转换规则（JSON 字符串，实例级，可选）", required = false)
+    private String responseConversionRule;
 }

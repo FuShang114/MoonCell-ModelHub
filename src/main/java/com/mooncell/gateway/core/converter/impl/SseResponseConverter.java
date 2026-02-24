@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>
  * 专门处理 SSE (Server-Sent Events) 格式的流式响应。
  * 将下游的 SSE 数据块转换为统一的输出格式。
- * 解析 SSE 行后委托给其他 ResponseConverter（如 OpenApiResponseConverter）做 JSON 转换。
+ * 解析 SSE 行后直接委托给 RuleBasedResponseConverter 做 JSON 转换。
  */
 @Slf4j
 @Component
@@ -25,21 +25,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SseResponseConverter implements ResponseConverter {
     
     private final ObjectMapper objectMapper;
-    private final List<ResponseConverter> responseConverters;
-    
-    /** 排除自身，获取实际做 JSON 转换的转换器，避免循环依赖 */
-    private ResponseConverter getContentConverter(ModelInstance instance) {
-        return responseConverters.stream()
-            .filter(c -> c != this)
-            .filter(c -> c.supports(instance))
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException("No response converter found for instance"));
-    }
+    /**
+     * 统一的 JSON 内容转换器：内部再根据实例配置选择规则/默认行为。
+     * 这里不再按 supports() 在一堆实现里筛选，避免“谁来处理”与实例配置脱节。
+     */
+    private final RuleBasedResponseConverter responseConverter;
     
     @Override
     public List<String> convert(ModelInstance instance, JsonNode instanceResponse, 
                                String defaultRequestId, AtomicInteger seqCounter) {
-        return getContentConverter(instance).convert(instance, instanceResponse, defaultRequestId, seqCounter);
+        return responseConverter.convert(instance, instanceResponse, defaultRequestId, seqCounter);
     }
     
     /**
@@ -89,7 +84,6 @@ public class SseResponseConverter implements ResponseConverter {
             
             try {
                 JsonNode root = objectMapper.readTree(payload);
-                var responseConverter = getContentConverter(instance);
                 List<String> converted = responseConverter.convert(
                     instance, root, defaultRequestId, seqCounter);
                 outputs.addAll(converted);

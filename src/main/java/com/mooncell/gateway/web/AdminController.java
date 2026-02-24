@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -160,7 +161,7 @@ public class AdminController {
 
     @Operation(summary = "测试实例", description = "向指定实例发送测试消息并返回原始响应")
     @PostMapping("/instances/{id}/test")
-    public String testInstance(
+    public Mono<String> testInstance(
             @PathVariable("id") Long id,
             @RequestBody TestInstanceRequest request
     ) {
@@ -169,7 +170,7 @@ public class AdminController {
 
     @Operation(summary = "测试实例配置（未保存）", description = "使用提交的实例配置直接发送测试消息，不落库")
     @PostMapping("/instances/test-config")
-    public String testInstanceConfig(@RequestBody com.mooncell.gateway.dto.TestInstanceConfigRequest request) throws Exception {
+    public Mono<String> testInstanceConfig(@RequestBody com.mooncell.gateway.dto.TestInstanceConfigRequest request) {
         return adminService.testInstanceConfig(request);
     }
 

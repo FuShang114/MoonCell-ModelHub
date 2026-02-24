@@ -1,6 +1,9 @@
 package com.mooncell.gateway.core.dao;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mooncell.gateway.core.converter.ConverterFactory;
+import com.mooncell.gateway.core.converter.RequestConverter;
 import com.mooncell.gateway.core.model.ModelInstance;
 import com.mooncell.gateway.dto.ProviderDto;
 import jakarta.annotation.PostConstruct;
@@ -9,8 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,10 +39,25 @@ import java.util.concurrent.atomic.AtomicLong;
 @RequiredArgsConstructor
 public class InstanceStore {
 
+    /**
+     * 相对“应用根目录”的持久化目录。
+     * <p>
+     * 应用根目录的解析逻辑为：
+     * <ul>
+     *     <li>打包后运行（jar 模式）：使用 jar 所在的目录作为根目录</li>
+     *     <li>开发模式（mvn spring-boot:run / IDE 运行）：
+     *     若 codeSource 目录形如 {@code ${projectRoot}/target/classes}，
+     *     则回退到 {@code ${projectRoot}} 作为根目录</li>
+     *     <li>若上述逻辑解析失败，则退回到 {@code user.dir}（当前工作目录）</li>
+     * </ul>
+     * 这样可以保证：不论从哪个目录执行 {@code java -jar ...}，
+     * 都始终以“项目根/可执行文件所在目录”为持久化起点，而不是绑定到某个盘符。
+     */
     private static final String PERSISTENCE_DIR = "data/instances";
     private static final String PERSISTENCE_FILE = "instances.json";
 
     private final ObjectMapper objectMapper;
+    private final ConverterFactory converterFactory;
 
     private final ConcurrentHashMap<Long, ProviderRecord> providersById = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> providerNameToId = new ConcurrentHashMap<>();
@@ -48,6 +68,9 @@ public class InstanceStore {
 
     @PostConstruct
     public void init() {
+        Path baseDir = resolveAppBaseDir();
+        Path persistenceDir = baseDir.resolve(PERSISTENCE_DIR);
+        log.info("InstanceStore baseDir={}, persistenceDir={}", baseDir.toAbsolutePath(), persistenceDir.toAbsolutePath());
         restoreFromDisk();
         log.info("InstanceStore initialized: providers={}, instances={}",
                 providersById.size(), instancesById.size());
@@ -241,6 +264,9 @@ public class InstanceStore {
                 instance.setProviderName(provider.name());
             }
         }
+        // 初始化运行时状态与预绑定的请求转换器
+        initializeInstanceRuntime(instance);
+
         instancesById.put(id, instance);
         flushImmediately();
         return instance;
@@ -268,6 +294,8 @@ public class InstanceStore {
         updated.setId(id);
         // 恢复运行时状态
         runtime.applyTo(updated);
+        // 重新初始化运行时转换相关状态
+        initializeInstanceRuntime(updated);
 
         instancesById.put(id, updated);
         flushImmediately();
@@ -315,7 +343,7 @@ public class InstanceStore {
     }
 
     private void flushToDisk() throws IOException {
-        Path dir = Path.of(PERSISTENCE_DIR);
+        Path dir = resolvePersistenceDir();
         if (!Files.exists(dir)) {
             Files.createDirectories(dir);
         }
@@ -337,7 +365,32 @@ public class InstanceStore {
         data.instanceSeq = instanceSeq.get();
         List<ModelInstance> instanceList = new ArrayList<>(instancesById.values());
         instanceList.sort(Comparator.comparingLong(ModelInstance::getId));
-        data.instances = instanceList;
+
+        List<PersistedInstance> persistedInstances = new ArrayList<>(instanceList.size());
+        for (ModelInstance inst : instanceList) {
+            PersistedInstance p = new PersistedInstance();
+            p.id = inst.getId();
+            p.providerId = inst.getProviderId();
+            p.providerName = inst.getProviderName();
+            p.modelName = inst.getModelName();
+            p.url = inst.getUrl();
+            p.apiKey = inst.getApiKey();
+            p.postModel = inst.getPostModel();
+            p.responseRequestIdPath = inst.getResponseRequestIdPath();
+            p.responseContentPath = inst.getResponseContentPath();
+            p.responseSeqPath = inst.getResponseSeqPath();
+            p.responseRawEnabled = inst.getResponseRawEnabled();
+            p.requestConversionRule = inst.getRequestConversionRule();
+            p.responseConversionRule = inst.getResponseConversionRule();
+            p.weight = inst.getWeight();
+            p.rpmLimit = inst.getRpmLimit();
+            p.tpmLimit = inst.getTpmLimit();
+            p.poolKey = inst.getPoolKey();
+            p.maxQps = inst.getMaxQps();
+            p.isActive = inst.getIsActive();
+            persistedInstances.add(p);
+        }
+        data.instances = persistedInstances;
 
         Path file = dir.resolve(PERSISTENCE_FILE);
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), data);
@@ -346,7 +399,7 @@ public class InstanceStore {
 
     private void restoreFromDisk() {
         try {
-            Path dir = Path.of(PERSISTENCE_DIR);
+            Path dir = resolvePersistenceDir();
             if (!Files.exists(dir)) {
                 Files.createDirectories(dir);
             }
@@ -381,10 +434,33 @@ public class InstanceStore {
                 }
             }
             if (data.instances != null) {
-                for (ModelInstance instance : data.instances) {
-                    if (instance.getId() == null) {
+                for (PersistedInstance p : data.instances) {
+                    if (p.id == null) {
                         continue;
                     }
+                    ModelInstance instance = new ModelInstance();
+                    instance.setId(p.id);
+                    instance.setProviderId(p.providerId);
+                    instance.setProviderName(p.providerName);
+                    instance.setModelName(p.modelName);
+                    instance.setUrl(p.url);
+                    instance.setApiKey(p.apiKey);
+                    instance.setPostModel(p.postModel);
+                    instance.setResponseRequestIdPath(p.responseRequestIdPath);
+                    instance.setResponseContentPath(p.responseContentPath);
+                    instance.setResponseSeqPath(p.responseSeqPath);
+                    instance.setResponseRawEnabled(p.responseRawEnabled);
+                    instance.setRequestConversionRule(p.requestConversionRule);
+                    instance.setResponseConversionRule(p.responseConversionRule);
+                    instance.setWeight(p.weight);
+                    instance.setRpmLimit(p.rpmLimit);
+                    instance.setTpmLimit(p.tpmLimit);
+                    instance.setPoolKey(p.poolKey);
+                    instance.setMaxQps(p.maxQps);
+                    instance.setIsActive(p.isActive);
+
+                    // 从磁盘恢复后，补齐运行时状态与预绑定转换器
+                    initializeInstanceRuntime(instance);
                     instancesById.put(instance.getId(), instance);
                 }
             }
@@ -397,6 +473,70 @@ public class InstanceStore {
                     providersById.size(), instancesById.size());
         } catch (Exception e) {
             log.warn("Failed to restore InstanceStore from disk, start with empty store", e);
+        }
+    }
+
+    /**
+     * 解析应用根目录：
+     * <ul>
+     *     <li>若 codeSource 是一个 jar 文件，则使用 jar 所在目录</li>
+     *     <li>若 codeSource 是 {@code .../target/classes}，则回退到项目根目录</li>
+     *     <li>否则直接使用 codeSource 路径</li>
+     * </ul>
+     * 若解析过程中出现异常，则退回到 {@code user.dir}。
+     */
+    private static Path resolveAppBaseDir() {
+        try {
+            Path codeSourcePath = Paths.get(
+                    InstanceStore.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+            );
+            // jar 模式：codeSource 是一个文件
+            if (Files.isRegularFile(codeSourcePath)) {
+                return codeSourcePath.getParent();
+            }
+            // 开发模式：通常是 ${projectRoot}/target/classes/
+            Path fileName = codeSourcePath.getFileName();
+            if (fileName != null && "classes".equals(fileName.toString())) {
+                Path targetDir = codeSourcePath.getParent();
+                if (targetDir != null && "target".equals(targetDir.getFileName().toString())) {
+                    Path projectRoot = targetDir.getParent();
+                    if (projectRoot != null) {
+                        return projectRoot;
+                    }
+                }
+            }
+            // 兜底：直接使用 codeSource 目录
+            return codeSourcePath;
+        } catch (URISyntaxException e) {
+            // 兜底：使用当前工作目录
+            return Paths.get(System.getProperty("user.dir")).toAbsolutePath();
+        }
+    }
+
+    /**
+     * 解析持久化目录：始终以应用根目录为起点的相对路径。
+     */
+    private static Path resolvePersistenceDir() {
+        return resolveAppBaseDir().resolve(PERSISTENCE_DIR);
+    }
+
+    /**
+     * 初始化实例的运行时状态与预绑定转换器。
+     * <p>
+     * - 确保 Atomic 字段已初始化；
+     * - 基于实例当前配置选择并绑定请求转换器，便于负载均衡后直接调用实例的 convertRequest 方法。
+     */
+    private void initializeInstanceRuntime(ModelInstance instance) {
+        if (instance == null) {
+            return;
+        }
+        instance.ensureRuntimeState();
+        try {
+            RequestConverter requestConverter = converterFactory.getRequestConverter(instance);
+            instance.setRequestConverter(requestConverter);
+        } catch (Exception e) {
+            // 初始化阶段如果绑定转换器失败，仅记录日志，保留后续调用时抛出的显式错误
+            log.warn("Failed to bind request converter for instance {}: {}", instance.getId(), e.getMessage());
         }
     }
 
@@ -470,11 +610,33 @@ public class InstanceStore {
         public String responseConversionRule;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class PersistedInstance {
+        public Long id;
+        public Long providerId;
+        public String providerName;
+        public String modelName;
+        public String url;
+        public String apiKey;
+        public String postModel;
+        public String responseRequestIdPath;
+        public String responseContentPath;
+        public String responseSeqPath;
+        public Boolean responseRawEnabled;
+        public String requestConversionRule;
+        public String responseConversionRule;
+        public Integer weight;
+        public Integer rpmLimit;
+        public Integer tpmLimit;
+        public String poolKey;
+        public Integer maxQps;
+        public Boolean isActive;
+    }
+
     private static class PersistedData {
         public long providerSeq;
         public long instanceSeq;
         public List<PersistedProvider> providers = new ArrayList<>();
-        public List<ModelInstance> instances = new ArrayList<>();
+        public List<PersistedInstance> instances = new ArrayList<>();
     }
 }
-

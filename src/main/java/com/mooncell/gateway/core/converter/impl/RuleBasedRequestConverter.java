@@ -16,8 +16,9 @@ import org.springframework.stereotype.Component;
 /**
  * 基于转换规则的请求转换器
  * <p>
- * 如果实例配置了转换规则，则使用规则进行转换；
- * 否则回退到默认的 OpenApiRequestConverter。
+ * 所有请求都统一走规则引擎：
+ * - 如果未配置请求规则或规则缺失 request 段，则视为配置错误，抛出异常；
+ * - 不再回退到 OpenApiRequestConverter。
  */
 @Slf4j
 @Component
@@ -25,29 +26,31 @@ import org.springframework.stereotype.Component;
 public class RuleBasedRequestConverter implements RequestConverter {
     
     private final ObjectMapper objectMapper;
-    private final OpenApiRequestConverter fallbackConverter;
     
     @Override
     public JsonNode convert(ModelInstance instance, JsonNode gatewayRequest) {
         String ruleJson = instance.getRequestConversionRule();
         if (ruleJson == null || ruleJson.isBlank()) {
-            // 没有配置转换规则，使用默认转换器
-            return fallbackConverter.convert(instance, gatewayRequest);
+            throw new IllegalStateException("Request conversion rule is not configured for instance: "
+                    + instance.getModelName());
         }
-        
+
         try {
             // 直接解析规则字符串
             ConversionRule rule = parseRule(ruleJson);
-            
+
             if (rule.getRequestRule() == null) {
-                return fallbackConverter.convert(instance, gatewayRequest);
+                throw new IllegalStateException("Request rule segment is missing for instance: "
+                        + instance.getModelName());
             }
-            
+
             return applyRequestRule(instance, gatewayRequest, rule.getRequestRule());
         } catch (Exception e) {
-            log.warn("Failed to apply conversion rule for instance {}, fallback to default: {}", 
-                instance.getModelName(), e.getMessage());
-            return fallbackConverter.convert(instance, gatewayRequest);
+            // 任何规则解析/应用失败都直接向上抛，让调用方计入失败统计
+            log.warn("Failed to apply request conversion rule for instance {}: {}",
+                    instance.getModelName(), e.getMessage());
+            throw new IllegalStateException("Failed to apply request conversion rule for instance "
+                    + instance.getModelName(), e);
         }
     }
     
@@ -72,9 +75,9 @@ public class RuleBasedRequestConverter implements RequestConverter {
      */
     private JsonNode applyRequestRule(ModelInstance instance, JsonNode gatewayRequest, JsonNode rule) {
         if (rule == null) {
-            return fallbackConverter.convert(instance, gatewayRequest);
+            throw new IllegalStateException("Request rule is null for instance: " + instance.getModelName());
         }
-        
+
         String type = rule.has("type") ? rule.get("type").asText() : "template";
         
         if ("template".equals(type)) {
@@ -95,9 +98,10 @@ public class RuleBasedRequestConverter implements RequestConverter {
     private JsonNode applyTemplateRule(ModelInstance instance, JsonNode gatewayRequest, JsonNode rule) {
         JsonNode templateNode = rule.has("template") ? rule.get("template") : rule;
         if (!templateNode.isObject()) {
-            return fallbackConverter.convert(instance, gatewayRequest);
+            throw new IllegalStateException("Template request rule must be an object for instance: "
+                    + instance.getModelName());
         }
-        
+
         ObjectNode result = templateNode.deepCopy();
         replacePlaceholders(result, instance, gatewayRequest, rule);
         return result;
@@ -184,6 +188,11 @@ public class RuleBasedRequestConverter implements RequestConverter {
                     return gatewayRequest.get("messages").deepCopy();
                 }
                 return objectMapper.createArrayNode();
+            case "$message":
+                // 提供与 OpenApiRequestConverter 相同的语义：提取“最后一条 user 消息”的 content，作为纯文本。
+                // 这样模板可以直接写 "input": "$message" 来满足像 Ark 这类要求 input 为字符串的接口。
+                String userMessage = extractUserMessage(gatewayRequest);
+                return TextNode.valueOf(userMessage != null ? userMessage : "");
             case "$stream":
                 if (gatewayRequest.has("stream")) {
                     return gatewayRequest.get("stream");
@@ -199,6 +208,33 @@ public class RuleBasedRequestConverter implements RequestConverter {
                 }
                 return null;
         }
+    }
+
+    /**
+     * 从标准化后的网关请求中提取用户输入文本
+     * 与 OpenApiRequestConverter.extractUserMessage 保持一致语义，避免两套逻辑不一致。
+     */
+    private String extractUserMessage(JsonNode gatewayRequest) {
+        if (gatewayRequest == null) {
+            return "";
+        }
+        // 优先从 messages 数组中提取最后一条 user 消息的 content
+        if (gatewayRequest.has("messages") && gatewayRequest.get("messages").isArray()) {
+            ArrayNode messages = (ArrayNode) gatewayRequest.get("messages");
+            for (int i = messages.size() - 1; i >= 0; i--) {
+                JsonNode msg = messages.get(i);
+                if (msg.has("role") && "user".equals(msg.get("role").asText())) {
+                    if (msg.has("content")) {
+                        return msg.get("content").asText();
+                    }
+                }
+            }
+        }
+        // 兼容旧格式：直接使用 message 字段
+        if (gatewayRequest.has("message")) {
+            return gatewayRequest.get("message").asText();
+        }
+        return "";
     }
     
     /**
