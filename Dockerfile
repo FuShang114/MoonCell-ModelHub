@@ -19,4 +19,4 @@ COPY --from=builder /app/target/*.jar /app/app.jar
 EXPOSE 9061
 USER appuser
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-Xms2g", "-Xmx2g", "-jar", "/app/app.jar"]
